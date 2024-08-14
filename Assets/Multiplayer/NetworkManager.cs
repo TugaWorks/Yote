@@ -130,7 +130,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     private void StartGame()
     {
         statusText.text = "Jogador encontrado! Iniciando o jogo...";
-        PhotonNetwork.LoadLevel("SampleScene"); // Certifique-se de ter uma cena chamada "SampleScene"
+        PhotonNetwork.LoadLevel("MultiplayerScene"); // Certifique-se de ter uma cena chamada "MultiplayerScene"
     }
 
     private string GenerateRoomCode()
