@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
+using System.Linq;
 
 enum DirectionOfMovement
 {
@@ -16,10 +18,24 @@ public class ComputerPlayer : MonoBehaviour
     public List<PieceScriptVsComputer> computerPieces = new List<PieceScriptVsComputer>();
     public List<PieceScriptVsComputer> computerPiecesOutBoard = new List<PieceScriptVsComputer>();
     public List<PieceScriptVsComputer> computerPiecesInBoard = new List<PieceScriptVsComputer>();
+    public PieceScriptVsComputer currentPieceToMove = null;
     public float delayBetweenMoves = 2f;
     private string lastCaptureDirection = "";
 
     private DirectionOfMovement dirMovement;
+    public static ComputerPlayer instance;
+
+    void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
     void Start()
     {
         // Inicialização se necessário
@@ -40,19 +56,35 @@ public class ComputerPlayer : MonoBehaviour
         {
             if (computerPiecesInBoard.Count > 0)
             {
-                // Decidir se vai jogar uma nova peça ou mover uma peça existente
-                bool playNewPiece = DecideIfPlaceNewPiece();
 
-                if (playNewPiece && computerPiecesOutBoard.Count > 0)
+                // Decidir se vai jogar uma nova peça ou mover uma peça existente
+                bool canCapturePiece = DecideIfCanCapturePiece();
+                if (!canCapturePiece)
                 {
-                    yield return StartCoroutine(PlaceNewPiece());
+                    bool playPiece = UnityEngine.Random.Range(0, 2) == 0;
+                    if (playPiece)
+                    {
+                        if (!canCapturePiece && computerPiecesOutBoard.Count > 0)
+                        {
+                            yield return StartCoroutine(PlaceNewPiece());
+                        }
+                    }
+                    else
+                    {
+                        // Esperar um momento para simular o pensamento do computador
+                        yield return new WaitForSeconds(delayBetweenMoves);
+                        MoveExistingPiece(currentPieceToMove);
+
+                    }
                 }
                 else
                 {
                     // Esperar um momento para simular o pensamento do computador
                     yield return new WaitForSeconds(delayBetweenMoves);
-                    MoveExistingPiece();
+                    MoveExistingPiece(currentPieceToMove);
                 }
+                
+               
             }
             else
             {
@@ -61,7 +93,13 @@ public class ComputerPlayer : MonoBehaviour
         }
         else
         {
-            MoveExistingPiece();
+            if (currentPieceToMove) { 
+                MoveExistingPiece(currentPieceToMove);
+            }
+            else
+            {
+                MoveExistingPiece(ChoosePiecetoMove());
+            }
         }
 
         // Esperar um momento após a jogada do computador
@@ -71,54 +109,82 @@ public class ComputerPlayer : MonoBehaviour
         GameManagerVsComputer.instance.EndTurn();
     }
 
-    private bool DecideIfPlaceNewPiece()
+
+    private PieceScriptVsComputer ChoosePiecetoMove()
     {
         // Verificar se há alguma peça em board que pode capturar uma peça inimiga adjacente
         foreach (var piece in computerPiecesInBoard)
         {
-            if (CanCapture(piece))
+            if (piece != null)
             {
-                // Se houver uma peça que pode capturar, não colocar uma nova peça
-                return false;
+                if (!CanCapture(piece))
+                {
+                    return piece;
+                    
+                }
+            }
+        }
+
+        return null;
+    }
+    private bool DecideIfCanCapturePiece()
+    {
+        // Verificar se há alguma peça em board que pode capturar uma peça inimiga adjacente
+        foreach (var piece in computerPiecesInBoard)
+        {
+            if (piece != null)
+            {
+                if (CanCapture(piece))
+                {
+                    // Se houver uma peça que pode capturar, não colocar uma nova peça
+                    currentPieceToMove = piece;
+                    return true;
+                }
             }
         }
 
         // Se nenhuma peça puder capturar, decidir aleatoriamente
-        return Random.Range(0, 2) == 0;
+        return false;
     }
 
     private CellScriptsVSComputer CanCapture(PieceScriptVsComputer piece)
     {
-        CellScriptsVSComputer currentCell = piece.currentCell;
+        try
+        {
+            CellScriptsVSComputer currentCell = piece.currentCell;
 
-        if (currentCell.cellLeft != null && currentCell.cellLeft.isOccupied && currentCell.cellLeft.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellLeft.cellLeft != null && !currentCell.cellLeft.cellLeft.isOccupied)
-        {
-            dirMovement = DirectionOfMovement.Left;
-            return currentCell.cellLeft;
+            if (currentCell.cellLeft != null && currentCell.cellLeft.isOccupied && currentCell.cellLeft.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellLeft.cellLeft != null && !currentCell.cellLeft.cellLeft.isOccupied)
+            {
+                dirMovement = DirectionOfMovement.Left;
+                return currentCell.cellLeft;
+            }
+            if (currentCell.cellRight != null && currentCell.cellRight.isOccupied && currentCell.cellRight.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellRight.cellRight != null && !currentCell.cellRight.cellRight.isOccupied)
+            {
+                dirMovement = DirectionOfMovement.Right;
+                return currentCell.cellRight;
+            }
+            if (currentCell.cellAbove != null && currentCell.cellAbove.isOccupied && currentCell.cellAbove.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellAbove.cellAbove != null && !currentCell.cellAbove.cellAbove.isOccupied)
+            {
+                dirMovement = DirectionOfMovement.Above;
+                return currentCell.cellAbove;
+            }
+            if (currentCell.cellBelow != null && currentCell.cellBelow.isOccupied && currentCell.cellBelow.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellBelow.cellBelow != null && !currentCell.cellBelow.cellBelow.isOccupied)
+            {
+                dirMovement = DirectionOfMovement.Below;
+                return currentCell.cellBelow;
+            }
         }
-        if (currentCell.cellRight != null && currentCell.cellRight.isOccupied && currentCell.cellRight.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellRight.cellRight != null && !currentCell.cellRight.cellRight.isOccupied)
+        catch (System.Exception ex)
         {
-            dirMovement = DirectionOfMovement.Right;
-            return currentCell.cellRight;
+            Debug.Log(ex.Message);
         }
-        if (currentCell.cellAbove != null && currentCell.cellAbove.isOccupied && currentCell.cellAbove.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellAbove.cellAbove != null && !currentCell.cellAbove.cellAbove.isOccupied)
-        {
-            dirMovement = DirectionOfMovement.Above;
-            return currentCell.cellAbove;
-        }
-        if (currentCell.cellBelow != null && currentCell.cellBelow.isOccupied && currentCell.cellBelow.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellBelow.cellBelow != null && !currentCell.cellBelow.cellBelow.isOccupied)
-        {
-            dirMovement = DirectionOfMovement.Below;
-            return currentCell.cellBelow;
-        }
-
         return null;
     }
 
     private IEnumerator PlaceNewPiece()
     {
         // Escolher uma peça disponível aleatoriamente
-        PieceScriptVsComputer pieceToPlace = computerPiecesOutBoard[Random.Range(0, computerPiecesOutBoard.Count)];
+        PieceScriptVsComputer pieceToPlace = computerPiecesOutBoard[UnityEngine.Random.Range(0, computerPiecesOutBoard.Count)];
 
         // Colocar a peça em uma célula disponível
         CellScriptsVSComputer targetCell = GameManagerVsComputer.instance.FindAvailableCell();
@@ -129,14 +195,15 @@ public class ComputerPlayer : MonoBehaviour
                 pieceToPlace.currentCell.isOccupied = false;
                 pieceToPlace.currentCell.currentPiece = null;
             }
+            computerPiecesInBoard.Add(pieceToPlace);
             yield return StartCoroutine(MovePieceToCell(pieceToPlace, targetCell));
         }
     }
     private IEnumerator WaitFirstCapture(PieceScriptVsComputer piece)
     {
-       
-            yield return new WaitForSeconds(1f);
-        CheckForChainCapture(piece);
+
+        yield return new WaitForSeconds(1f);
+        StartCoroutine(CheckForChainCapture(piece, 1));
 
     }
     private IEnumerator MovePieceToCell(PieceScriptVsComputer piece, CellScriptsVSComputer targetCell)
@@ -166,28 +233,30 @@ public class ComputerPlayer : MonoBehaviour
         targetCell.isOccupied = true;
         targetCell.currentPiece = piece;
 
-        computerPiecesOutBoard.Remove(piece);
-        computerPiecesInBoard.Add(piece);
+
+        if (ListHavePiece(computerPiecesOutBoard, piece))
+        {
+            computerPiecesOutBoard.Remove(piece);
+        }
+        
+        
 
         // Verificar se há captura em cadeia
     }
-
-    private void MoveExistingPiece()
+    private bool ListHavePiece(List<PieceScriptVsComputer> listToSearch, PieceScriptVsComputer pieceToFind)
     {
-        // Escolher uma peça que já está no tabuleiro
-        PieceScriptVsComputer pieceToMove = null;
-        foreach (var piece in computerPiecesInBoard)
+        foreach(PieceScriptVsComputer piece in listToSearch)
         {
-            if (!piece.isOutSide)
+            if(piece == pieceToFind)
             {
-                pieceToMove = piece;
-
-                if (pieceToMove.currentCell) pieceToMove.lastCell = pieceToMove.currentCell;
-                if (pieceToMove.lastCell) pieceToMove.lastCell.isOccupied = false;
-                break;
+                return true;
             }
         }
 
+        return false;
+    }
+    private void MoveExistingPiece(PieceScriptVsComputer pieceToMove)
+    {
         // Verificar se temos uma peça para mover
         if (pieceToMove != null)
         {
@@ -196,42 +265,59 @@ public class ComputerPlayer : MonoBehaviour
             // Verificar se a célula de captura está ocupada
             if (cellWithPieceToCapture != null && cellWithPieceToCapture.isOccupied && cellWithPieceToCapture.currentPiece.isPlayerOnePiece != pieceToMove.isPlayerOnePiece)
             {
+                bool CapturedAPiece = false;
                 dirMovement = GetDirection(pieceToMove, cellWithPieceToCapture);
-                if (dirMovement == DirectionOfMovement.Left)
+                if (dirMovement == DirectionOfMovement.Left && cellWithPieceToCapture.cellLeft != null)
                 {
                     pieceToMove.currentCell.isOccupied = false;
                     cellWithPieceToCapture.isOccupied = false;
                     StartCoroutine(MovePieceToCell(pieceToMove, cellWithPieceToCapture.cellLeft));
-
+                    GameManagerVsComputer.instance.playerList[0].PlayerPiecesInside.Remove(cellWithPieceToCapture.currentPiece);
                     Destroy(cellWithPieceToCapture.currentPiece.gameObject);
+                    CapturedAPiece = true;
                 }
-                if (dirMovement == DirectionOfMovement.Right)
+                if (dirMovement == DirectionOfMovement.Right && cellWithPieceToCapture.cellRight != null)
                 {
                     pieceToMove.currentCell.isOccupied = false;
                     cellWithPieceToCapture.isOccupied = false;
                     StartCoroutine(MovePieceToCell(pieceToMove, cellWithPieceToCapture.cellRight));
-
+                    GameManagerVsComputer.instance.playerList[0].PlayerPiecesInside.Remove(cellWithPieceToCapture.currentPiece);
                     Destroy(cellWithPieceToCapture.currentPiece.gameObject);
+                    CapturedAPiece = true;
                 }
-                if (dirMovement == DirectionOfMovement.Above)
+                if (dirMovement == DirectionOfMovement.Above && cellWithPieceToCapture.cellAbove != null)
                 {
                     pieceToMove.currentCell.isOccupied = false;
                     cellWithPieceToCapture.isOccupied = false;
                     StartCoroutine(MovePieceToCell(pieceToMove, cellWithPieceToCapture.cellAbove));
-
+                    GameManagerVsComputer.instance.playerList[0].PlayerPiecesInside.Remove(cellWithPieceToCapture.currentPiece);
                     Destroy(cellWithPieceToCapture.currentPiece.gameObject);
+                    CapturedAPiece = true;
                 }
-                if (dirMovement == DirectionOfMovement.Below)
+                if (dirMovement == DirectionOfMovement.Below && cellWithPieceToCapture.cellBelow != null)
                 {
                     pieceToMove.currentCell.isOccupied = false;
                     cellWithPieceToCapture.isOccupied = false;
                     StartCoroutine(MovePieceToCell(pieceToMove, cellWithPieceToCapture.cellBelow));
-
+                    GameManagerVsComputer.instance.playerList[0].PlayerPiecesInside.Remove(cellWithPieceToCapture.currentPiece);
                     Destroy(cellWithPieceToCapture.currentPiece.gameObject);
+                    CapturedAPiece = true;
+                }
+                if (CapturedAPiece)
+                {
+                    StartCoroutine(WaitFirstCapture(pieceToMove));
+                }
+                else
+                {
+                    // Apenas mover para uma célula adjacente disponível
+                    CellScriptsVSComputer targetCell = FindAvailableAdjacentCell(pieceToMove.currentCell);
+                    if (targetCell != null)
+                    {
+                        StartCoroutine(MovePieceToCell(pieceToMove, targetCell));
+                    }
                 }
 
-                StartCoroutine(WaitFirstCapture(pieceToMove));
-                
+
             }
             else
             {
@@ -242,6 +328,63 @@ public class ComputerPlayer : MonoBehaviour
                     StartCoroutine(MovePieceToCell(pieceToMove, targetCell));
                 }
             }
+
+            currentPieceToMove = null;
+        }
+        else
+        {
+            // Apenas mover para uma célula adjacente disponível
+            PieceScriptVsComputer pieceToMoveOnly = moveRandomPieceInsideBoard();
+            CellScriptsVSComputer targetCell = FindAvailableAdjacentCell(pieceToMoveOnly.currentCell);
+            if (targetCell != null)
+            {
+                pieceToMoveOnly.currentCell.isOccupied = false;
+                StartCoroutine(MovePieceToCell(pieceToMoveOnly, targetCell));
+            }
+        }
+    }
+
+    private PieceScriptVsComputer moveRandomPieceInsideBoard()
+    {
+        // Verificar se há peças no tabuleiro
+        if (computerPiecesInBoard.Count == 0)
+        {
+            return null;
+        }
+
+        // Criar uma lista de índices de peças
+        List<int> indices = new List<int>();
+        for (int i = 0; i < computerPiecesInBoard.Count; i++)
+        {
+            indices.Add(i);
+        }
+
+        // Embaralhar a lista de índices para escolher uma peça aleatória
+        Shuffle(indices);
+
+        // Tentar encontrar uma peça que não pode capturar para mover
+        foreach (int index in indices)
+        {
+            PieceScriptVsComputer piece = computerPiecesInBoard[index];
+            if (!CanCapture(piece))
+            {
+                return piece;
+            }
+        }
+
+        // Se todas as peças puderem capturar, retornar null
+        return null;
+    }
+
+    // Método para embaralhar uma lista de índices
+    private void Shuffle(List<int> list)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = UnityEngine.Random.Range(0, i + 1);
+            int temp = list[i];
+            list[i] = list[j];
+            list[j] = temp;
         }
     }
 
@@ -278,7 +421,7 @@ public class ComputerPlayer : MonoBehaviour
 
         if (adjacentCellsToTheCurrentCell.Count > 0)
         {
-            int chooseCapture = Random.Range(0, adjacentCellsToTheCurrentCell.Count);
+            int chooseCapture = UnityEngine.Random.Range(0, adjacentCellsToTheCurrentCell.Count);
             return adjacentCellsToTheCurrentCell[chooseCapture];
         }
 
@@ -295,29 +438,29 @@ public class ComputerPlayer : MonoBehaviour
         return null;
     }
 
-    private void CheckForChainCapture(PieceScriptVsComputer piece)
+    private IEnumerator CheckForChainCapture(PieceScriptVsComputer piece, int countCaptures)
     {
 
         CellScriptsVSComputer cellWithPieceToCapture = CanCapture(piece); // aqui se retornar a cell ja deve ficar correto
-        int countCaptures = 0;
+     
 
-        if (cellWithPieceToCapture && countCaptures < 1)
+        if (cellWithPieceToCapture)
         {
             PieceScriptVsComputer adjacentPiece = cellWithPieceToCapture.currentPiece;
             if (adjacentPiece != null && adjacentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
             {
-                
+
                 if (cellWithPieceToCapture != null && cellWithPieceToCapture.isOccupied)
                 {
                     piece.currentCell.isOccupied = false;
                     switch (dirMovement)
                     {
-                        
-                        case DirectionOfMovement.Right: StartCoroutine(MovePieceToCell(piece, cellWithPieceToCapture.cellRight));  break; 
-                        case DirectionOfMovement.Left: StartCoroutine(MovePieceToCell(piece, cellWithPieceToCapture.cellLeft));  break; 
-                        case DirectionOfMovement.Above: StartCoroutine(MovePieceToCell(piece, cellWithPieceToCapture.cellAbove));  break; 
-                        case DirectionOfMovement.Below: StartCoroutine(MovePieceToCell(piece, cellWithPieceToCapture.cellBelow));  break;
-                            
+
+                        case DirectionOfMovement.Right: StartCoroutine(MovePieceToCell(piece, cellWithPieceToCapture.cellRight)); break;
+                        case DirectionOfMovement.Left: StartCoroutine(MovePieceToCell(piece, cellWithPieceToCapture.cellLeft)); break;
+                        case DirectionOfMovement.Above: StartCoroutine(MovePieceToCell(piece, cellWithPieceToCapture.cellAbove)); break;
+                        case DirectionOfMovement.Below: StartCoroutine(MovePieceToCell(piece, cellWithPieceToCapture.cellBelow)); break;
+
                     }
 
                     adjacentPiece.currentCell.isOccupied = false;
@@ -326,9 +469,11 @@ public class ComputerPlayer : MonoBehaviour
                 }
             }
         }
+       
+        yield return null;
 
-        countCaptures = 0;
-    }    
+
+    }
     private CellScriptsVSComputer GetAdjacentCell(CellScriptsVSComputer cell, DirectionOfMovement direction)
     {
         switch (direction)

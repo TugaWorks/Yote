@@ -12,18 +12,29 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
     public bool isPlayerOnePiece = false;
     public bool isOutSide = true;
     private string lastCaptureDirection = "";
+    private Animator animPice;
 
     void Start()
     {
         initialPosition = transform.position;
         Physics.IgnoreLayerCollision(LayerMask.NameToLayer("Piece Layer"), LayerMask.NameToLayer("Piece Layer"), true);
+        animPice = GetComponent<Animator>();
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (GameManagerVsComputer.instance.isPlayerOneTurn) { 
+        if (GameManagerVsComputer.instance.isPlayerOneTurn) {
             if (!GameManagerVsComputer.instance.IsPlayerTurn(isPlayerOnePiece))
             {
+                return;
+            }
+            GameManagerVsComputer.instance.VerifyIfHasNoPieceToCapture(GameManagerVsComputer.instance.isPlayerOneTurn);
+            // Verifique se há peças que podem capturar antes de permitir arrastar
+            if (GameManagerVsComputer.instance.ListOfpieceThatHasAnotherPieceToCapture.Count > 0 &&
+                !GameManagerVsComputer.instance.ListOfpieceThatHasAnotherPieceToCapture.Contains(this))
+            {
+                // Existe outra peça que deve capturar, então não permita o movimento
+                Debug.Log("Você deve usar uma peça que pode capturar!");
                 return;
             }
 
@@ -37,6 +48,7 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
             {
                 GameManagerVsComputer.instance.HighlightAdjacentCells(lastCell, isPlayerOnePiece);
             }
+
         }
         else
         {
@@ -96,6 +108,7 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
                 currentCell.isOccupied = true;
                 currentCell.currentPiece = this;
                 transform.position = currentCell.transform.position;
+                GameManagerVsComputer.instance.playerList[0].PlayerPiecesInside.Add(this);
             }
             else
             {
@@ -118,6 +131,7 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
             PieceScriptVsComputer capturedPiece = middleCell.currentPiece;
             if (capturedPiece != null && capturedPiece.GetComponent<PieceScriptVsComputer>().isPlayerOnePiece != isPlayerOnePiece)
             {
+                ComputerPlayer.instance.computerPiecesInBoard.Remove(capturedPiece);
                 GameManagerVsComputer.instance.RemovePiece(capturedPiece);
                 lastCaptureDirection = GameManagerVsComputer.instance.GetCaptureDirection(lastCell, currentCell);
                 return true;
@@ -155,7 +169,7 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
         return Camera.main.ScreenToWorldPoint(mousePoint);
     }
 
-    private bool CheckAndHandleAdjacentCaptures()
+    public bool CheckAndHandleAdjacentCaptures()
     {
         bool canCaptureAgain = false;
         int countCaptures = 0;
@@ -184,14 +198,14 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
         return canCaptureAgain;
     }
 
-    private bool CheckCapture(CellScriptsVSComputer cell, string direction, ref int countCaptures)
+    public bool CheckCapture(CellScriptsVSComputer cell, string direction, ref int countCaptures)
     {
         if (cell != null)
         {
             CellScriptsVSComputer nextCell = GetNextCell(cell, direction);
             if (nextCell != null)
             {
-                PieceScriptVsComputer piece = cell.GetComponentInChildren<PieceScriptVsComputer>();
+                PieceScriptVsComputer piece = cell.currentPiece;
                 if (piece != null && countCaptures < 1)
                 {
                     if (!nextCell.isOccupied && cell.isOccupied && piece.isPlayerOnePiece != isPlayerOnePiece)

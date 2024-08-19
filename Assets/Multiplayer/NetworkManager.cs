@@ -2,6 +2,7 @@ using Photon.Pun;
 using Photon.Realtime;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class NetworkManager : MonoBehaviourPunCallbacks
@@ -132,7 +133,10 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         statusText.text = "Jogador encontrado! Iniciando o jogo...";
         PhotonNetwork.LoadLevel("MultiplayerScene"); // Certifique-se de ter uma cena chamada "MultiplayerScene"
     }
-
+    public void StartGameWithPC()
+    {
+        SceneManager.LoadScene("OfflineMode", LoadSceneMode.Single);
+    }
     private string GenerateRoomCode()
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

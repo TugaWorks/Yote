@@ -207,7 +207,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346556, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Name
-      value: PieceComputer (11)
+      value: PieceOfComputer12
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346558, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -334,7 +334,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346556, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Name
-      value: PieceComputer (6)
+      value: PieceOfComputer7
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346558, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -483,7 +483,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346556, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Name
-      value: PieceComputer (2)
+      value: PieceOfComputer3
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346558, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -572,7 +572,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346556, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Name
-      value: PieceComputer (8)
+      value: PieceOfComputer9
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346558, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -694,7 +694,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346556, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Name
-      value: PieceComputer (3)
+      value: PieceOfComputer4
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346558, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -783,7 +783,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346556, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Name
-      value: PieceComputer (7)
+      value: PieceOfComputer8
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346558, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -1161,7 +1161,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346556, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Name
-      value: PieceComputer (1)
+      value: PieceOfComputer2
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346558, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -3065,7 +3065,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346556, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Name
-      value: PieceComputer (10)
+      value: PieceOfComputer11
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346558, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -3165,7 +3165,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346556, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Name
-      value: PieceComputer (4)
+      value: PieceOfComputer5
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346558, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -3396,7 +3396,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346556, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Name
-      value: PieceComputer (9)
+      value: PieceOfComputer10
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346558, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -3658,7 +3658,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346556, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Name
-      value: PieceComputer
+      value: PieceOfComputer1
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346558, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -3798,7 +3798,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346556, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Name
-      value: PieceComputer (5)
+      value: PieceOfComputer6
       objectReference: {fileID: 0}
     - target: {fileID: 5689209388629346558, guid: a67bcd120cba6474f90ac0d6ae9bd076, type: 3}
       propertyPath: m_Materials.Array.data[0]

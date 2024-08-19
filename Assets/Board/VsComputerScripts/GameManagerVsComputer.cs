@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 
 public class GameManagerVsComputer : MonoBehaviour
@@ -122,6 +123,7 @@ public class GameManagerVsComputer : MonoBehaviour
         piece.GetComponent<PieceScriptVsComputer>().currentCell.currentPiece = null;
         piece.GetComponent<PieceScriptVsComputer>().currentCell = null;
         Destroy(piece.gameObject);
+        ComputerPlayer.instance.computerPieces.Remove(piece);
     }
 
     public string GetCaptureDirection(CellScriptsVSComputer startCell, CellScriptsVSComputer endCell)
@@ -159,4 +161,42 @@ public class GameManagerVsComputer : MonoBehaviour
         }
         return null;
     }
+    public List<PieceScriptVsComputer> ListOfpieceThatHasAnotherPieceToCapture = new List<PieceScriptVsComputer>();
+    public bool VerifyIfHasNoPieceToCapture(bool isPlayerOne)
+    {
+        ListOfpieceThatHasAnotherPieceToCapture.Clear();
+
+        foreach (PieceScriptVsComputer piece in playerList[0].PlayerPiecesInside)
+        {
+            CellScriptsVSComputer currentCell = piece.currentCell;
+
+            if (currentCell != null)
+            {
+                // Verificar direções para capturar
+                CheckAndAddPieceToCaptureList(currentCell, currentCell.cellAbove, currentCell.cellAbove?.cellAbove, isPlayerOne, piece);
+                CheckAndAddPieceToCaptureList(currentCell, currentCell.cellBelow, currentCell.cellBelow?.cellBelow, isPlayerOne, piece);
+                CheckAndAddPieceToCaptureList(currentCell, currentCell.cellLeft, currentCell.cellLeft?.cellLeft, isPlayerOne, piece);
+                CheckAndAddPieceToCaptureList(currentCell, currentCell.cellRight, currentCell.cellRight?.cellRight, isPlayerOne, piece);
+            }
+        }
+
+        return ListOfpieceThatHasAnotherPieceToCapture.Count > 0;
+    }
+
+    private void CheckAndAddPieceToCaptureList(CellScriptsVSComputer currentCell, CellScriptsVSComputer adjacentCell, CellScriptsVSComputer cellBeyond, bool isPlayerOne, PieceScriptVsComputer piece)
+    {
+        if (adjacentCell != null && adjacentCell.currentPiece != null && cellBeyond != null && cellBeyond.currentPiece == null)
+        {
+            if (adjacentCell.currentPiece.isPlayerOnePiece != isPlayerOne)
+            {
+                if (!ListOfpieceThatHasAnotherPieceToCapture.Contains(piece))
+                {
+                    ListOfpieceThatHasAnotherPieceToCapture.Add(piece);
+                    
+                }
+            }
+        }
+    }
+
+
 }

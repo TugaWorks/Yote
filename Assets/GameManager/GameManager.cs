@@ -322,6 +322,46 @@ public class GameManager : MonoBehaviourPunCallbacks
             return colDiff > 0 ? "Right" : "Left";
         }
     }
+    public List<PieceScript> ListOfpieceThatHasAnotherPieceToCapture = new List<PieceScript>();
+    public bool VerifyIfHasNoPieceToCapture(bool isPlayerOne , int playerId)
+    {
+        ListOfpieceThatHasAnotherPieceToCapture.Clear();
+        
+        Player playerPlaying = PhotonView.Find(playerId).GetComponent<Player>();
+        playerPlaying.PlayerPiecesInside.Add(this.gameObject);
+        if(playerPlaying.PlayerPiecesInside.Count > 0) { 
+            foreach (GameObject piece in playerPlaying.PlayerPiecesInside)
+            {
+                CellScripts currentCell = piece.GetComponent<PieceScript>().currentCell;
+
+                if (currentCell != null)
+                {
+                    // Verificar direções para capturar
+                    CheckAndAddPieceToCaptureList(currentCell, currentCell.cellAbove, currentCell.cellAbove?.cellAbove, isPlayerOne, piece.GetComponent<PieceScript>());
+                    CheckAndAddPieceToCaptureList(currentCell, currentCell.cellBelow, currentCell.cellBelow?.cellBelow, isPlayerOne, piece.GetComponent<PieceScript>());
+                    CheckAndAddPieceToCaptureList(currentCell, currentCell.cellLeft, currentCell.cellLeft?.cellLeft, isPlayerOne, piece.GetComponent<PieceScript>());
+                    CheckAndAddPieceToCaptureList(currentCell, currentCell.cellRight, currentCell.cellRight?.cellRight, isPlayerOne, piece.GetComponent<PieceScript>());
+                }
+            }
+        }
+
+        return ListOfpieceThatHasAnotherPieceToCapture.Count > 0;
+    }
+
+    private void CheckAndAddPieceToCaptureList(CellScripts currentCell, CellScripts adjacentCell, CellScripts cellBeyond, bool isPlayerOne, PieceScript piece)
+    {
+        if (adjacentCell != null && adjacentCell.currentPiece != null && cellBeyond != null && cellBeyond.currentPiece == null)
+        {
+            if (adjacentCell.currentPiece.isPlayerOnePiece != isPlayerOne)
+            {
+                if (!ListOfpieceThatHasAnotherPieceToCapture.Contains(piece))
+                {
+                    ListOfpieceThatHasAnotherPieceToCapture.Add(piece);
+
+                }
+            }
+        }
+    }
 }
 
 

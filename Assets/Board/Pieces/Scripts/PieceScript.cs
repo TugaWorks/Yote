@@ -1,6 +1,7 @@
 using Photon.Pun;
 using UnityEngine.EventSystems;
 using UnityEngine;
+using System.Linq;
 
 public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, IDropHandler
 {
@@ -30,6 +31,18 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
         if (!GameManager.instance.IsPlayerTurn(isPlayerOnePiece) || !IsPlayerPieceAllowed())
         {
             return; // Não é a vez do jogador atual ou peça não pertence ao jogador atual
+        }
+        int playerPlayingId = this.gameObject.transform.parent.parent.gameObject.GetComponent<PhotonView>().ViewID;
+        Player playerPlaying = PhotonView.Find(playerPlayingId).GetComponent<Player>();
+  
+        GameManager.instance.VerifyIfHasNoPieceToCapture(isPlayerOnePiece, playerPlayingId);
+        // Verifique se há peças que podem capturar antes de permitir arrastar
+        if (GameManager.instance.ListOfpieceThatHasAnotherPieceToCapture.Count > 0 &&
+            !GameManager.instance.ListOfpieceThatHasAnotherPieceToCapture.Contains(this))
+        {
+            // Existe outra peça que deve capturar, então não permita o movimento
+            Debug.Log("Você deve usar uma peça que pode capturar!");
+            return;
         }
 
         isDragging = true;

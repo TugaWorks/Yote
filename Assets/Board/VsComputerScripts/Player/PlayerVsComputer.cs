@@ -3,9 +3,9 @@ using UnityEngine;
 
 public class PlayerVsComputer : MonoBehaviour
 {
-    public List<GameObject> PlayerPieces = new List<GameObject>();
-    public List<GameObject> PlayerPiecesInside = new List<GameObject>();
-    public List<GameObject> PlayerPiecesOutside = new List<GameObject>();
+    public List<PieceScriptVsComputer> PlayerPieces = new List<PieceScriptVsComputer>();
+    public List<PieceScriptVsComputer> PlayerPiecesInside = new List<PieceScriptVsComputer>();
+    public List<PieceScriptVsComputer> PlayerPiecesOutside = new List<PieceScriptVsComputer>();
 
     public bool isPlayerOne = false;
     public Material playerMaterial;
