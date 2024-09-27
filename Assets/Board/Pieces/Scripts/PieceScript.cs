@@ -32,19 +32,34 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
         {
             return; // Não é a vez do jogador atual ou peça não pertence ao jogador atual
         }
-        int playerPlayingId = this.gameObject.transform.parent.parent.gameObject.GetComponent<PhotonView>().ViewID;
-        Player playerPlaying = PhotonView.Find(playerPlayingId).GetComponent<Player>();
-  
-        GameManager.instance.VerifyIfHasNoPieceToCapture(isPlayerOnePiece, playerPlayingId);
+       
+        int playerPlayingId = this.gameObject.tag == "Player1Piece" ? GameManager.instance.playerList[0].gameObject.GetComponent<PhotonView>().ViewID : GameManager.instance.playerList[1].gameObject.GetComponent<PhotonView>().ViewID;
+        
+        
+       
+            GameManager.instance.VerifyIfHasNoPieceToCapture(isPlayerOnePiece, playerPlayingId);
+        
+        
         // Verifique se há peças que podem capturar antes de permitir arrastar
         if (GameManager.instance.ListOfpieceThatHasAnotherPieceToCapture.Count > 0 &&
             !GameManager.instance.ListOfpieceThatHasAnotherPieceToCapture.Contains(this))
         {
+            for (int i = 0; i < GameManager.instance.ListOfpieceThatHasAnotherPieceToCapture.Count; i++)
+            {
+                GameManager.instance.HighlightAdjacentCells(GameManager.instance.ListOfpieceThatHasAnotherPieceToCapture[i].lastCell, GameManager.instance.ListOfpieceThatHasAnotherPieceToCapture[i].isPlayerOnePiece, GameManager.instance.ListOfpieceThatHasAnotherPieceToCapture[i]);
+            }
             // Existe outra peça que deve capturar, então não permita o movimento
             Debug.Log("Você deve usar uma peça que pode capturar!");
             return;
         }
-
+        if (!isOutSide)
+        {
+            if (GameManager.instance.CheckIfPieceIsStuck(this) && !GameManager.instance.ListOfpieceThatHasAnotherPieceToCapture.Contains(this))
+            {
+                return;
+            }
+        }
+        
         isDragging = true;
 
         if (lastCell == null)
@@ -53,7 +68,7 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
         }
         else
         {
-            GameManager.instance.HighlightAdjacentCells(lastCell, isPlayerOnePiece);
+            GameManager.instance.HighlightAdjacentCells(lastCell, isPlayerOnePiece, this);
         }
     }
 
@@ -85,9 +100,9 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
                 }
                 if (isOutSide)
                 {
-                    int playerPlayingId = this.gameObject.transform.parent.parent.gameObject.GetComponent<PhotonView>().ViewID;
+                    int playerPlayingId = this.gameObject.tag == "Player1Piece" ? GameManager.instance.playerList[0].gameObject.GetComponent<PhotonView>().ViewID : GameManager.instance.playerList[1].gameObject.GetComponent<PhotonView>().ViewID;
                     Player playerPlaying = PhotonView.Find(playerPlayingId).GetComponent<Player>();
-                    playerPlaying.PlayerPiecesInside.Add(this.gameObject);
+                    playerPlaying.PlayerPiecesInside.Add(this);
                     GameManager.instance.EndTurn();
 
                 }
@@ -108,7 +123,10 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
                         GameManager.instance.EndTurn();
                     }
                 }
-                if(lastCell) lastCell.isOccupied = false;
+                if (lastCell)
+                {
+                    lastCell.isOccupied = false; lastCell.currentPiece = null;
+                }
                
 
                 // Atualizar a posição para todos os jogadores
@@ -125,11 +143,20 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
             else
             {
                 transform.position = initialPosition;
+                if (!isOutSide)
+                {
+                    currentCell = lastCell;
+                }
+                
             }
         }
         else
         {
             transform.position = initialPosition;
+            if (!isOutSide)
+            {
+                currentCell = lastCell;
+            }
         }
 
         GameManager.instance.ClearHighlightedCells();
@@ -165,6 +192,7 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
         if (cell != null)
         {
             cell.isOccupied = false;
+            cell.currentPiece = null;
         }
 
 
@@ -178,7 +206,7 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
             if (capturedPiece != null && capturedPiece.isPlayerOnePiece != isPlayerOnePiece)
             {
                GameManager.instance.RemovePiece(capturedPiece);
-                 lastCaptureDirection = GameManager.instance.GetCaptureDirection(lastCell, currentCell);
+               lastCaptureDirection = GameManager.instance.GetCaptureDirection(lastCell, currentCell);
                 Debug.Log("Direction of capture: " + lastCaptureDirection);
                 photonView.RPC("RPC_UpdateLastCellState", RpcTarget.All, lastCell.photonView.ViewID);
                 // Atualizar a remoção da peça capturada para todos os jogadores
@@ -225,6 +253,8 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
             if (cell == currentCell)
             {
                 currentCell = null;
+                //photonView.RPC("RPC_UpdateLastCellState", RpcTarget.All, currentCell.gameObject.GetComponent<PhotonView>().ViewID);
+
             }
         }
     }

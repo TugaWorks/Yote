@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -11,7 +12,7 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
 
     public bool isPlayerOnePiece = false;
     public bool isOutSide = true;
-    private string lastCaptureDirection = "";
+    public string lastCaptureDirection = "";
     private Animator animPice;
 
     void Start()
@@ -28,16 +29,24 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
             {
                 return;
             }
+            if (GameManagerVsComputer.instance.CheckIfPieceIsStuck(this) && !isOutSide && !GameManagerVsComputer.instance.ListOfpieceThatHasAnotherPieceToCapture.Contains(this))
+            {
+                return;
+            }
             GameManagerVsComputer.instance.VerifyIfHasNoPieceToCapture(GameManagerVsComputer.instance.isPlayerOneTurn);
             // Verifique se há peças que podem capturar antes de permitir arrastar
             if (GameManagerVsComputer.instance.ListOfpieceThatHasAnotherPieceToCapture.Count > 0 &&
                 !GameManagerVsComputer.instance.ListOfpieceThatHasAnotherPieceToCapture.Contains(this))
             {
+                for(int i = 0; i < GameManagerVsComputer.instance.ListOfpieceThatHasAnotherPieceToCapture.Count; i++)
+                {
+                    GameManagerVsComputer.instance.HighlightAdjacentCells(GameManagerVsComputer.instance.ListOfpieceThatHasAnotherPieceToCapture[i].lastCell, GameManagerVsComputer.instance.ListOfpieceThatHasAnotherPieceToCapture[i].isPlayerOnePiece, GameManagerVsComputer.instance.ListOfpieceThatHasAnotherPieceToCapture[i]);
+                }
                 // Existe outra peça que deve capturar, então não permita o movimento
                 Debug.Log("Você deve usar uma peça que pode capturar!");
                 return;
             }
-
+           
             isDragging = true;
 
             if (lastCell == null)
@@ -46,7 +55,7 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
             }
             else
             {
-                GameManagerVsComputer.instance.HighlightAdjacentCells(lastCell, isPlayerOnePiece);
+                GameManagerVsComputer.instance.HighlightAdjacentCells(lastCell, isPlayerOnePiece, this);
             }
 
         }
@@ -82,6 +91,7 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
                 }
                 if (isOutSide)
                 {
+                    GameManagerVsComputer.instance.playerList[0].PlayerPiecesInside.Add(this);
                     GameManagerVsComputer.instance.EndTurn();
                 }
                 else
@@ -108,16 +118,24 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
                 currentCell.isOccupied = true;
                 currentCell.currentPiece = this;
                 transform.position = currentCell.transform.position;
-                GameManagerVsComputer.instance.playerList[0].PlayerPiecesInside.Add(this);
+                
             }
             else
             {
                 transform.position = initialPosition;
+                if (!isOutSide)
+                {
+                    currentCell = lastCell;
+                }
             }
         }
         else
         {
             transform.position = initialPosition;
+            if (!isOutSide)
+            {
+                currentCell = lastCell;
+            }
         }
 
         GameManagerVsComputer.instance.ClearHighlightedCells();
@@ -133,6 +151,7 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
             {
                 ComputerPlayer.instance.computerPiecesInBoard.Remove(capturedPiece);
                 GameManagerVsComputer.instance.RemovePiece(capturedPiece);
+                lastCell.currentPiece = null;
                 lastCaptureDirection = GameManagerVsComputer.instance.GetCaptureDirection(lastCell, currentCell);
                 return true;
             }
@@ -157,6 +176,7 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
             CellScriptsVSComputer cell = other.GetComponent<CellScriptsVSComputer>();
             if (cell == currentCell)
             {
+                cell.currentPiece = null;
                 currentCell = null;
             }
         }

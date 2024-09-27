@@ -1,8 +1,10 @@
 using Photon.Pun;
 using Photon.Realtime;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviourPunCallbacks
@@ -102,14 +104,86 @@ public class GameManager : MonoBehaviourPunCallbacks
             }
         }
     }
-
-    public override void OnPlayerLeftRoom(Photon.Realtime.Player otherPlayer)
+    public bool CheckIfPieceIsStuck(PieceScript piece)
     {
-        base.OnPlayerLeftRoom(otherPlayer);
+        CellScripts currentCell = piece.currentCell;
 
-        playerList.RemoveAll(player => player.photonPlayer == otherPlayer);
+        // Verificar se a célula atual da peça existe
+        if (currentCell != null)
+        {
+            // Verificar célula à esquerda
+            if (currentCell.cellLeft != null)
+            {
+                if (!currentCell.cellLeft.isOccupied)
+                {
+                    return false; // Há um espaço disponível à esquerda
+                }
+                else if (currentCell.cellLeft.isOccupied && currentCell.cellLeft.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
+                {
+                    // A célula à esquerda está ocupada por uma peça inimiga, verificar se pode capturar
+                    if (currentCell.cellLeft.cellLeft != null && !currentCell.cellLeft.cellLeft.isOccupied)
+                    {
+                        return false; // Pode capturar a peça inimiga à esquerda
+                    }
+                }
+            }
+
+            // Verificar célula à direita
+            if (currentCell.cellRight != null)
+            {
+                if (!currentCell.cellRight.isOccupied)
+                {
+                    return false; // Há um espaço disponível à direita
+                }
+                else if (currentCell.cellRight.isOccupied && currentCell.cellRight.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
+                {
+                    // A célula à direita está ocupada por uma peça inimiga, verificar se pode capturar
+                    if (currentCell.cellRight.cellRight != null && !currentCell.cellRight.cellRight.isOccupied)
+                    {
+                        return false; // Pode capturar a peça inimiga à direita
+                    }
+                }
+            }
+
+            // Verificar célula acima
+            if (currentCell.cellAbove != null)
+            {
+                if (!currentCell.cellAbove.isOccupied)
+                {
+                    return false; // Há um espaço disponível acima
+                }
+                else if (currentCell.cellAbove.isOccupied && currentCell.cellAbove.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
+                {
+                    // A célula acima está ocupada por uma peça inimiga, verificar se pode capturar
+                    if (currentCell.cellAbove.cellAbove != null && !currentCell.cellAbove.cellAbove.isOccupied)
+                    {
+                        return false; // Pode capturar a peça inimiga acima
+                    }
+                }
+            }
+
+            // Verificar célula abaixo
+            if (currentCell.cellBelow != null)
+            {
+                if (!currentCell.cellBelow.isOccupied)
+                {
+                    return false; // Há um espaço disponível abaixo
+                }
+                else if (currentCell.cellBelow.isOccupied && currentCell.cellBelow.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
+                {
+                    // A célula abaixo está ocupada por uma peça inimiga, verificar se pode capturar
+                    if (currentCell.cellBelow.cellBelow != null && !currentCell.cellBelow.cellBelow.isOccupied)
+                    {
+                        return false; // Pode capturar a peça inimiga abaixo
+                    }
+                }
+            }
+        }
+
+        // Se todas as verificações falharem, a peça está presa
+        return true;
     }
-
+  
     private void UpdateCurrentPlayerText()
     {
         currentPlayerText.text = $"Current Player: {(currentPlayerIndex == 0 ? "Player 1" : "Player 2")}";
@@ -167,21 +241,43 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
 
-    public void HighlightAdjacentCells(CellScripts cell, bool isPlayerOnePiece)
+    public void HighlightAdjacentCells(CellScripts cell, bool isPlayerOnePiece, PieceScript currentPiece)
     {
         ClearHighlightedCells();
         if (cell != null)
         {
-            HighlightCell(cell.cellAbove);
-            HighlightCell(cell.cellBelow);
-            HighlightCell(cell.cellLeft);
-            HighlightCell(cell.cellRight);
+            //HighlightCell(cell.cellAbove);
+            //HighlightCell(cell.cellBelow);
+            //HighlightCell(cell.cellLeft);
+            //HighlightCell(cell.cellRight);
 
-            CheckAndHighlightJump(cell, cell.cellAbove, cell.cellAbove?.cellAbove, isPlayerOnePiece);
-            CheckAndHighlightJump(cell, cell.cellBelow, cell.cellBelow?.cellBelow, isPlayerOnePiece);
-            CheckAndHighlightJump(cell, cell.cellLeft, cell.cellLeft?.cellLeft, isPlayerOnePiece);
-            CheckAndHighlightJump(cell, cell.cellRight, cell.cellRight?.cellRight, isPlayerOnePiece);
+            //CheckAndHighlightJump(cell, cell.cellAbove, cell.cellAbove?.cellAbove, isPlayerOnePiece);
+            //CheckAndHighlightJump(cell, cell.cellBelow, cell.cellBelow?.cellBelow, isPlayerOnePiece);
+            //CheckAndHighlightJump(cell, cell.cellLeft, cell.cellLeft?.cellLeft, isPlayerOnePiece);
+            //CheckAndHighlightJump(cell, cell.cellRight, cell.cellRight?.cellRight, isPlayerOnePiece);
+
+            if (GameManager.instance.ListOfpieceThatHasAnotherPieceToCapture.Contains(currentPiece))
+            {
+                // Apenas destacar as células além de uma peça inimiga
+                CheckAndHighlightJump(cell, cell.cellAbove, cell.cellAbove?.cellAbove, isPlayerOnePiece);
+                CheckAndHighlightJump(cell, cell.cellBelow, cell.cellBelow?.cellBelow, isPlayerOnePiece);
+                CheckAndHighlightJump(cell, cell.cellLeft, cell.cellLeft?.cellLeft, isPlayerOnePiece);
+                CheckAndHighlightJump(cell, cell.cellRight, cell.cellRight?.cellRight, isPlayerOnePiece);
+            }
+            else
+            {
+                // Caso não esteja na lista, destaca as células adjacentes normais
+                if (cell != null)
+                {
+                    if (cell.cellAbove != null && !cell.cellAbove.isOccupied) cell.cellAbove.Highlight();
+                    if (cell.cellBelow != null && !cell.cellBelow.isOccupied) cell.cellBelow.Highlight();
+                    if (cell.cellLeft != null && !cell.cellLeft.isOccupied) cell.cellLeft.Highlight();
+                    if (cell.cellRight != null && !cell.cellRight.isOccupied) cell.cellRight.Highlight();
+                }
+            }
         }
+
+        
     }
 
     public void CheckAndHighlightJump(CellScripts currentCell, CellScripts adjacentCell, CellScripts jumpCell, bool isPlayerOnePiece)
@@ -227,16 +323,19 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         // Identifique o jogador que perdeu a peça e remova a peça da sua lista
         Player currentPlayer = playerList[piece.isPlayerOnePiece ? 0 : 1];
-        currentPlayer.PlayerPieces.Remove(piece.gameObject);
+        currentPlayer.PlayerPieces.Remove(piece);
 
         // Identifique o outro jogador
         Player otherPlayer = playerList[piece.isPlayerOnePiece ? 1 : 0];
 
-        // Destrói a peça
+        // Envie o ViewID da peça e o ActorNumber do jogador que a possui
+        photonView.RPC("RemovePieceOnline", RpcTarget.All, piece.photonView.ViewID, currentPlayer.photonPlayer.ActorNumber, piece.currentCell.photonView.ViewID);
+
+        // Destroi a peça localmente
         Destroy(piece.gameObject);
 
         // Verifique se o jogador atual (que perdeu a peça) tem menos de uma peça
-        if (currentPlayer.PlayerPieces.Count < 12)
+        if (currentPlayer.PlayerPieces.Count < 1)
         {
             Debug.Log($"{otherPlayer.photonPlayer.NickName} ganhou o jogo!"); // Mensagem de debug indicando que o outro jogador ganhou
 
@@ -252,10 +351,77 @@ public class GameManager : MonoBehaviourPunCallbacks
             string message = isLocalPlayer ? "You lost" : "You win";
             TextWinLost.gameObject.SetActive(true);
             TextWinLost.text = message;
+            // Sai da sala atual
+            PhotonNetwork.LeaveRoom();
+
+            // Após sair da sala, desconecta do servidor
+            PhotonNetwork.Disconnect();
+            GoToMainMenu();
             // Envie a mensagem correta para cada jogador
             photonView.RPC("ShowEndGameMessage", RpcTarget.Others, localPlayerId, localPlayerMessage, otherPlayerMessage);
-            
         }
+    }
+
+    [PunRPC]
+    private void RemovePieceOnline(int pieceId, int playerActorNumber, int cellPieceId)
+    {
+        // Encontrar o jogador pelo ActorNumber
+        Player playerOfPiece = FindPlayerByActorNumber(playerActorNumber);
+
+        // Encontrar a peça pelo ViewID
+        PieceScript pieceToRemove = FindPieceById(pieceId, playerOfPiece);
+        CellScripts cell = FindCellById(cellPieceId);
+        // Remover a peça se encontrada
+        if (pieceToRemove != null)
+        {
+            // Primeiro, remova a peça da lista de peças
+            playerOfPiece.PlayerPiecesInside.Remove(pieceToRemove);
+            cell.currentPiece = null;
+            cell.isOccupied = false;
+            // Destrua a peça depois de removê-la da lista
+            Destroy(pieceToRemove.gameObject);
+
+            // Opcional: Limpar referências nulas restantes na lista
+            playerOfPiece.PlayerPiecesInside.RemoveAll(item => item == null);
+        }
+    }
+
+    // Função para encontrar a peça pelo ViewID
+    private PieceScript FindPieceById(int pieceId, Player player)
+    {
+        foreach (PieceScript piece in player.PlayerPiecesInside)
+        {
+            if (piece.photonView.ViewID == pieceId)
+            {
+                return piece;
+            }
+        }
+        return null;
+    }
+
+    // Função para encontrar o jogador pelo ActorNumber
+    private Player FindPlayerByActorNumber(int actorNumber)
+    {
+        foreach (Player player in GameManager.instance.playerList)
+        {
+            if (player.photonPlayer.ActorNumber == actorNumber)
+            {
+                return player;
+            }
+        }
+        return null;
+    }
+    // Função para encontrar o jogador pelo ActorNumber
+    private CellScripts FindCellById(int piceId)
+    {
+        foreach (CellScripts cell in BoardManager.instance.allCells)
+        {
+            if (cell.photonView.ViewID == piceId)
+            {
+                return cell;
+            }
+        }
+        return null;
     }
 
     [PunRPC]
@@ -272,7 +438,13 @@ public class GameManager : MonoBehaviourPunCallbacks
         Debug.Log(message); // Apenas para debug, você pode substituir isso pela lógica da UI
         TextWinLost.gameObject.SetActive(true);
         TextWinLost.text = message; // Certifique-se de ter uma referência ao componente de texto UI
-        Interstitial.instance.ShowAd();
+        // Sai da sala atual
+        PhotonNetwork.LeaveRoom();
+
+        // Após sair da sala, desconecta do servidor
+        PhotonNetwork.Disconnect();
+        GoToMainMenu();
+        
     }
     public int GetRow(CellScripts cell)
     {
@@ -328,20 +500,27 @@ public class GameManager : MonoBehaviourPunCallbacks
         ListOfpieceThatHasAnotherPieceToCapture.Clear();
         
         Player playerPlaying = PhotonView.Find(playerId).GetComponent<Player>();
-        playerPlaying.PlayerPiecesInside.Add(this.gameObject);
-        if(playerPlaying.PlayerPiecesInside.Count > 0) { 
-            foreach (GameObject piece in playerPlaying.PlayerPiecesInside)
-            {
-                CellScripts currentCell = piece.GetComponent<PieceScript>().currentCell;
 
-                if (currentCell != null)
-                {
-                    // Verificar direções para capturar
-                    CheckAndAddPieceToCaptureList(currentCell, currentCell.cellAbove, currentCell.cellAbove?.cellAbove, isPlayerOne, piece.GetComponent<PieceScript>());
-                    CheckAndAddPieceToCaptureList(currentCell, currentCell.cellBelow, currentCell.cellBelow?.cellBelow, isPlayerOne, piece.GetComponent<PieceScript>());
-                    CheckAndAddPieceToCaptureList(currentCell, currentCell.cellLeft, currentCell.cellLeft?.cellLeft, isPlayerOne, piece.GetComponent<PieceScript>());
-                    CheckAndAddPieceToCaptureList(currentCell, currentCell.cellRight, currentCell.cellRight?.cellRight, isPlayerOne, piece.GetComponent<PieceScript>());
+
+        if(playerPlaying.PlayerPiecesInside.Count > 0) { 
+            foreach (PieceScript piece in playerPlaying.PlayerPiecesInside)
+            {
+                if (piece) { 
+                    if (!piece.isOutSide)
+                    {
+                        CellScripts currentCell = piece.GetComponent<PieceScript>().currentCell;
+
+                        if (currentCell != null)
+                        {
+                            // Verificar direções para capturar
+                            CheckAndAddPieceToCaptureList(currentCell, currentCell.cellAbove, currentCell.cellAbove?.cellAbove, isPlayerOne, piece.GetComponent<PieceScript>());
+                            CheckAndAddPieceToCaptureList(currentCell, currentCell.cellBelow, currentCell.cellBelow?.cellBelow, isPlayerOne, piece.GetComponent<PieceScript>());
+                            CheckAndAddPieceToCaptureList(currentCell, currentCell.cellLeft, currentCell.cellLeft?.cellLeft, isPlayerOne, piece.GetComponent<PieceScript>());
+                            CheckAndAddPieceToCaptureList(currentCell, currentCell.cellRight, currentCell.cellRight?.cellRight, isPlayerOne, piece.GetComponent<PieceScript>());
+                        }
+                    }
                 }
+
             }
         }
 
@@ -361,6 +540,37 @@ public class GameManager : MonoBehaviourPunCallbacks
                 }
             }
         }
+    }
+    // Método chamado automaticamente quando um jogador sai da sala
+    public override void OnPlayerLeftRoom(Photon.Realtime.Player otherPlayer)
+    {
+        Debug.Log($"O outro jogador saiu da sala.");
+        base.OnPlayerLeftRoom(otherPlayer);
+
+        playerList.RemoveAll(player => player.photonPlayer == otherPlayer);
+        // Aqui você pode notificar o outro jogador
+        NotifyPlayerLeft(otherPlayer.NickName);
+    }
+
+    // Método para notificar o jogador restante
+    void NotifyPlayerLeft(string playerName)
+    {
+        // Aqui pode ser implementada a lógica para notificação visual ou sonora
+        // Exemplo: Mostrar uma mensagem na tela
+        Debug.Log($"O outro jogador saiu da sala.");
+
+        // Sai da sala atual
+        PhotonNetwork.LeaveRoom();
+
+        // Após sair da sala, desconecta do servidor
+        PhotonNetwork.Disconnect();
+        GoToMainMenu();
+        // Se você tem uma UI para notificação:
+        // UIManager.Instance.ShowNotification($"{playerName} deixou o jogo.");
+    }
+    private void GoToMainMenu()
+    {
+        SceneManager.LoadScene("LobbyScene");
     }
 }
 

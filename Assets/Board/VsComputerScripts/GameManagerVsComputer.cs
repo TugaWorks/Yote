@@ -64,22 +64,112 @@ public class GameManagerVsComputer : MonoBehaviour
             }
         }
     }
+    public bool CheckIfPieceIsStuck(PieceScriptVsComputer piece)
+    {
+        CellScriptsVSComputer currentCell = piece.currentCell;
 
-    public void HighlightAdjacentCells(CellScriptsVSComputer cell, bool isPlayerOnePiece)
+        // Verificar se a célula atual da peça existe
+        if (currentCell != null)
+        {
+            // Verificar célula à esquerda
+            if (currentCell.cellLeft != null)
+            {
+                if (!currentCell.cellLeft.isOccupied)
+                {
+                    return false; // Há um espaço disponível à esquerda
+                }
+                else if (currentCell.cellLeft.isOccupied && currentCell.cellLeft.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
+                {
+                    // A célula à esquerda está ocupada por uma peça inimiga, verificar se pode capturar
+                    if (currentCell.cellLeft.cellLeft != null && !currentCell.cellLeft.cellLeft.isOccupied)
+                    {
+                        return false; // Pode capturar a peça inimiga à esquerda
+                    }
+                }
+            }
+
+            // Verificar célula à direita
+            if (currentCell.cellRight != null)
+            {
+                if (!currentCell.cellRight.isOccupied)
+                {
+                    return false; // Há um espaço disponível à direita
+                }
+                else if (currentCell.cellRight.isOccupied && currentCell.cellRight.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
+                {
+                    // A célula à direita está ocupada por uma peça inimiga, verificar se pode capturar
+                    if (currentCell.cellRight.cellRight != null && !currentCell.cellRight.cellRight.isOccupied)
+                    {
+                        return false; // Pode capturar a peça inimiga à direita
+                    }
+                }
+            }
+
+            // Verificar célula acima
+            if (currentCell.cellAbove != null)
+            {
+                if (!currentCell.cellAbove.isOccupied)
+                {
+                    return false; // Há um espaço disponível acima
+                }
+                else if (currentCell.cellAbove.isOccupied && currentCell.cellAbove.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
+                {
+                    // A célula acima está ocupada por uma peça inimiga, verificar se pode capturar
+                    if (currentCell.cellAbove.cellAbove != null && !currentCell.cellAbove.cellAbove.isOccupied)
+                    {
+                        return false; // Pode capturar a peça inimiga acima
+                    }
+                }
+            }
+
+            // Verificar célula abaixo
+            if (currentCell.cellBelow != null)
+            {
+                if (!currentCell.cellBelow.isOccupied)
+                {
+                    return false; // Há um espaço disponível abaixo
+                }
+                else if (currentCell.cellBelow.isOccupied && currentCell.cellBelow.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
+                {
+                    // A célula abaixo está ocupada por uma peça inimiga, verificar se pode capturar
+                    if (currentCell.cellBelow.cellBelow != null && !currentCell.cellBelow.cellBelow.isOccupied)
+                    {
+                        return false; // Pode capturar a peça inimiga abaixo
+                    }
+                }
+            }
+        }
+
+        // Se todas as verificações falharem, a peça está presa
+        return true;
+    }
+    public void HighlightAdjacentCells(CellScriptsVSComputer cell, bool isPlayerOnePiece, PieceScriptVsComputer currentPiece)
     {
         ClearHighlightedCells();
-        if (cell != null)
+        if (cell)
         {
-            if (cell.cellAbove != null && !cell.cellAbove.isOccupied) cell.cellAbove.Highlight();
-            if (cell.cellBelow != null && !cell.cellBelow.isOccupied) cell.cellBelow.Highlight();
-            if (cell.cellLeft != null && !cell.cellLeft.isOccupied) cell.cellLeft.Highlight();
-            if (cell.cellRight != null && !cell.cellRight.isOccupied) cell.cellRight.Highlight();
-
-            CheckAndHighlightJump(cell, cell.cellAbove, cell.cellAbove?.cellAbove, isPlayerOnePiece);
-            CheckAndHighlightJump(cell, cell.cellBelow, cell.cellBelow?.cellBelow, isPlayerOnePiece);
-            CheckAndHighlightJump(cell, cell.cellLeft, cell.cellLeft?.cellLeft, isPlayerOnePiece);
-            CheckAndHighlightJump(cell, cell.cellRight, cell.cellRight?.cellRight, isPlayerOnePiece);
+            // Verifica se a peça está na lista de peças que podem capturar outra peça
+            if (GameManagerVsComputer.instance.ListOfpieceThatHasAnotherPieceToCapture.Contains(currentPiece))
+            {
+                // Apenas destacar as células além de uma peça inimiga
+                CheckAndHighlightJump(cell, cell.cellAbove, cell.cellAbove?.cellAbove, isPlayerOnePiece);
+                CheckAndHighlightJump(cell, cell.cellBelow, cell.cellBelow?.cellBelow, isPlayerOnePiece);
+                CheckAndHighlightJump(cell, cell.cellLeft, cell.cellLeft?.cellLeft, isPlayerOnePiece);
+                CheckAndHighlightJump(cell, cell.cellRight, cell.cellRight?.cellRight, isPlayerOnePiece);
+            }
+            else
+            {
+                // Caso não esteja na lista, destaca as células adjacentes normais
+                if (cell != null)
+                {
+                    if (cell.cellAbove != null && !cell.cellAbove.isOccupied) cell.cellAbove.Highlight();
+                    if (cell.cellBelow != null && !cell.cellBelow.isOccupied) cell.cellBelow.Highlight();
+                    if (cell.cellLeft != null && !cell.cellLeft.isOccupied) cell.cellLeft.Highlight();
+                    if (cell.cellRight != null && !cell.cellRight.isOccupied) cell.cellRight.Highlight();
+                }
+            }
         }
+       
     }
 
     public void CheckAndHighlightJump(CellScriptsVSComputer currentCell, CellScriptsVSComputer adjacentCell, CellScriptsVSComputer jumpCell, bool isPlayerOnePiece)
@@ -164,20 +254,46 @@ public class GameManagerVsComputer : MonoBehaviour
     public List<PieceScriptVsComputer> ListOfpieceThatHasAnotherPieceToCapture = new List<PieceScriptVsComputer>();
     public bool VerifyIfHasNoPieceToCapture(bool isPlayerOne)
     {
-        ListOfpieceThatHasAnotherPieceToCapture.Clear();
+        for(int i = 0; i < ListOfpieceThatHasAnotherPieceToCapture.Count; i++)
+        {
+            ListOfpieceThatHasAnotherPieceToCapture.Remove(ListOfpieceThatHasAnotherPieceToCapture[i]);
+        }
 
         foreach (PieceScriptVsComputer piece in playerList[0].PlayerPiecesInside)
         {
             CellScriptsVSComputer currentCell = piece.currentCell;
-
-            if (currentCell != null)
+            if (currentCell)
             {
-                // Verificar direções para capturar
-                CheckAndAddPieceToCaptureList(currentCell, currentCell.cellAbove, currentCell.cellAbove?.cellAbove, isPlayerOne, piece);
-                CheckAndAddPieceToCaptureList(currentCell, currentCell.cellBelow, currentCell.cellBelow?.cellBelow, isPlayerOne, piece);
-                CheckAndAddPieceToCaptureList(currentCell, currentCell.cellLeft, currentCell.cellLeft?.cellLeft, isPlayerOne, piece);
-                CheckAndAddPieceToCaptureList(currentCell, currentCell.cellRight, currentCell.cellRight?.cellRight, isPlayerOne, piece);
+
+           
+                if(currentCell.cellAbove != null && currentCell.cellAbove.currentPiece != null && currentCell.cellAbove.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellAbove.isOccupied && currentCell.cellAbove.cellAbove != null && !currentCell.cellAbove.cellAbove.isOccupied &&  !ListOfpieceThatHasAnotherPieceToCapture.Contains(piece))
+                {
+                    ListOfpieceThatHasAnotherPieceToCapture.Add(piece);
+                }
+                if (currentCell.cellBelow != null && currentCell.cellBelow.currentPiece != null && currentCell.cellBelow.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellBelow.isOccupied && currentCell.cellBelow.cellBelow != null && !currentCell.cellBelow.cellBelow.isOccupied && !ListOfpieceThatHasAnotherPieceToCapture.Contains(piece))
+                {
+                    ListOfpieceThatHasAnotherPieceToCapture.Add(piece);
+                }
+                if (currentCell.cellLeft != null && currentCell.cellLeft.currentPiece != null && currentCell.cellLeft.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellLeft.isOccupied &&  currentCell.cellLeft.cellLeft != null && !currentCell.cellLeft.cellLeft.isOccupied && !ListOfpieceThatHasAnotherPieceToCapture.Contains(piece))
+                {
+                    ListOfpieceThatHasAnotherPieceToCapture.Add(piece);
+                }
+                if (currentCell.cellRight != null && currentCell.cellRight.currentPiece != null && currentCell.cellRight.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellRight.isOccupied && currentCell.cellRight.cellRight != null && !currentCell.cellRight.cellRight.isOccupied && !ListOfpieceThatHasAnotherPieceToCapture.Contains(piece) )
+                {
+                    ListOfpieceThatHasAnotherPieceToCapture.Add(piece);
+                }
             }
+            //if (currentCell != null)
+            //{
+            //    switch (piece.lastCaptureDirection)
+            //    {
+            //        // Verificar direções para capturar
+            //        case "Above": CheckAndAddPieceToCaptureList(currentCell, currentCell.cellAbove, currentCell.cellAbove?.cellAbove, isPlayerOne, piece); break;
+            //        case "Below": CheckAndAddPieceToCaptureList(currentCell, currentCell.cellBelow, currentCell.cellBelow?.cellBelow, isPlayerOne, piece); break;
+            //        case "Left": CheckAndAddPieceToCaptureList(currentCell, currentCell.cellLeft, currentCell.cellLeft?.cellLeft, isPlayerOne, piece); break;
+            //        case "Right": CheckAndAddPieceToCaptureList(currentCell, currentCell.cellRight, currentCell.cellRight?.cellRight, isPlayerOne, piece); break;
+            //    }
+            //}
         }
 
         return ListOfpieceThatHasAnotherPieceToCapture.Count > 0;

@@ -7,9 +7,10 @@ public class CellScriptsVSComputer : MonoBehaviour
     public bool isOccupied = false;
     public bool isHighlighted = false;
     public Material OriginalMaterial;
+    public Material OccupiedMaterial;
     public Material MaterialHighlight;
 
-    private Renderer cellRenderer;
+    public Renderer cellRenderer;
 
     public CellScriptsVSComputer cellAbove;
     public CellScriptsVSComputer cellBelow;
@@ -160,4 +161,6 @@ public class CellScriptsVSComputer : MonoBehaviour
         isOccupied = false;
         Destroy(currentPiece);
     }
+
+  
 }

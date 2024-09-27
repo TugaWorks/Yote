@@ -58,6 +58,8 @@ MonoBehaviour:
   - SetupAdjacentCells
   - RPC_UpdateLastCellState
   - ShowEndGameMessage
+  - RemovePieceOnline
+  - OpponentLeftRoom
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

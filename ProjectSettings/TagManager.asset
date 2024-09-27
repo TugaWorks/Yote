@@ -10,6 +10,8 @@ TagManager:
   - Player2Piece
   - CellPlayer1
   - CellPlayer2
+  - PiecePlayer1
+  - PiecePlayer2
   layers:
   - Default
   - TransparentFX

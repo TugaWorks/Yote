@@ -12,10 +12,11 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public Button joinButton;
     public TMP_InputField roomCodeInputField;
     public TextMeshProUGUI statusText;
+    public TextMeshProUGUI textJoinGameHint;
 
     private string roomCode;
     private bool isHosting = false;
-
+    
     private void Start()
     {
         playButton.onClick.AddListener(OnPlayButtonClicked);
@@ -135,7 +136,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     }
     public void StartGameWithPC()
     {
-        SceneManager.LoadScene("OfflineMode", LoadSceneMode.Single);
+        SceneManager.LoadScene("VsComputerScene", LoadSceneMode.Single);
     }
     private string GenerateRoomCode()
     {
@@ -154,5 +155,20 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public bool IsRoomFull()
     {
         return PhotonNetwork.CurrentRoom.PlayerCount == 2;
+    }
+
+    public void PlaySoundSelect()
+    {
+        SoundManager.instance.PlaySoundSelect();
+    }
+
+    public void ShowHintJoinGame()
+    {
+        textJoinGameHint.gameObject.SetActive(true);
+    }
+
+    public void HideHintJoinGame()
+    {
+        textJoinGameHint.gameObject.SetActive(false);
     }
 }

@@ -91,7 +91,7 @@ public class BoardManager : MonoBehaviourPunCallbacks
             if (currentPlayer.GetComponent<PhotonView>().OwnerActorNr == localPlayerId)
             {
                 Material playerMaterial = currentPlayer.playerMaterial;
-                foreach (GameObject piece in currentPlayer.PlayerPieces)
+                foreach (PieceScript piece in currentPlayer.PlayerPieces)
                 {
                     piece.GetComponent<Renderer>().material = playerMaterial;
                 }

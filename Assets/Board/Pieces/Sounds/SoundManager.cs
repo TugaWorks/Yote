@@ -7,6 +7,7 @@ public class SoundManager : MonoBehaviour
     public static SoundManager instance;
 
     [SerializeField] private AudioSource soundPlacePiece;
+    [SerializeField] private AudioSource soundSelect;
     void Awake()
     {
         if (instance == null)
@@ -29,7 +30,10 @@ public class SoundManager : MonoBehaviour
     {
         soundPlacePiece.Play();
     }
-
+    public void PlaySoundSelect()
+    {
+        soundSelect.Play();
+    }
     // Update is called once per frame
     void Update()
     {
