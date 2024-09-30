@@ -78,12 +78,14 @@ public class GameManagerVsComputer : MonoBehaviour
                 {
                     return false; // Há um espaço disponível à esquerda
                 }
-                else if (currentCell.cellLeft.isOccupied && currentCell.cellLeft.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
-                {
-                    // A célula à esquerda está ocupada por uma peça inimiga, verificar se pode capturar
-                    if (currentCell.cellLeft.cellLeft != null && !currentCell.cellLeft.cellLeft.isOccupied)
+                if (currentCell.cellLeft.currentPiece) { 
+                    if (currentCell.cellLeft.isOccupied && currentCell.cellLeft.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
                     {
-                        return false; // Pode capturar a peça inimiga à esquerda
+                        // A célula à esquerda está ocupada por uma peça inimiga, verificar se pode capturar
+                        if (currentCell.cellLeft.cellLeft != null && !currentCell.cellLeft.cellLeft.isOccupied)
+                        {
+                            return false; // Pode capturar a peça inimiga à esquerda
+                        }
                     }
                 }
             }
@@ -95,12 +97,15 @@ public class GameManagerVsComputer : MonoBehaviour
                 {
                     return false; // Há um espaço disponível à direita
                 }
-                else if (currentCell.cellRight.isOccupied && currentCell.cellRight.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
+                if (currentCell.cellRight.currentPiece)
                 {
-                    // A célula à direita está ocupada por uma peça inimiga, verificar se pode capturar
-                    if (currentCell.cellRight.cellRight != null && !currentCell.cellRight.cellRight.isOccupied)
+                 if (currentCell.cellRight.isOccupied && currentCell.cellRight.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
                     {
-                        return false; // Pode capturar a peça inimiga à direita
+                        // A célula à direita está ocupada por uma peça inimiga, verificar se pode capturar
+                        if (currentCell.cellRight.cellRight != null && !currentCell.cellRight.cellRight.isOccupied)
+                        {
+                            return false; // Pode capturar a peça inimiga à direita
+                        }
                     }
                 }
             }
@@ -112,13 +117,16 @@ public class GameManagerVsComputer : MonoBehaviour
                 {
                     return false; // Há um espaço disponível acima
                 }
-                else if (currentCell.cellAbove.isOccupied && currentCell.cellAbove.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
+                if (currentCell.cellAbove.currentPiece)
+                {
+                 if (currentCell.cellAbove.isOccupied && currentCell.cellAbove.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
                 {
                     // A célula acima está ocupada por uma peça inimiga, verificar se pode capturar
                     if (currentCell.cellAbove.cellAbove != null && !currentCell.cellAbove.cellAbove.isOccupied)
                     {
                         return false; // Pode capturar a peça inimiga acima
                     }
+                }
                 }
             }
 
@@ -129,13 +137,16 @@ public class GameManagerVsComputer : MonoBehaviour
                 {
                     return false; // Há um espaço disponível abaixo
                 }
-                else if (currentCell.cellBelow.isOccupied && currentCell.cellBelow.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
+                if (currentCell.cellBelow.currentPiece)
+                {
+                 if (currentCell.cellBelow.isOccupied && currentCell.cellBelow.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
                 {
                     // A célula abaixo está ocupada por uma peça inimiga, verificar se pode capturar
                     if (currentCell.cellBelow.cellBelow != null && !currentCell.cellBelow.cellBelow.isOccupied)
                     {
                         return false; // Pode capturar a peça inimiga abaixo
                     }
+                }
                 }
             }
         }

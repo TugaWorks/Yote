@@ -239,7 +239,7 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag("Cell"))
+        if (other.gameObject.CompareTag("Cell") && other.GetComponent<CellScripts>().currentPiece == null)
         {
             currentCell = other.GetComponent<CellScripts>();
         }

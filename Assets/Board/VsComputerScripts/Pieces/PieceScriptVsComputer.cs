@@ -109,7 +109,11 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
                     }
                 }
 
-                if (lastCell) lastCell.isOccupied = false;
+                if (lastCell)
+                {
+                    lastCell.isOccupied = false;
+                    lastCell.currentPiece = null;
+                }
 
                 lastCell = currentCell;
                 initialPosition = currentCell.transform.position;
@@ -163,7 +167,7 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag("Cell"))
+        if (other.gameObject.CompareTag("Cell") && other.GetComponent<CellScriptsVSComputer>().currentPiece == null)
         {
             currentCell = other.GetComponent<CellScriptsVSComputer>();
         }

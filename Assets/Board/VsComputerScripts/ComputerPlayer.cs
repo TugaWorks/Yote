@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using TMPro;
 
 enum DirectionOfMovement
 {
@@ -25,6 +26,8 @@ public class ComputerPlayer : MonoBehaviour
     private DirectionOfMovement dirMovement;
     public static ComputerPlayer instance;
 
+    public TextMeshProUGUI textCountComputerPieces;
+
     void Awake()
     {
         if (instance == null)
@@ -42,6 +45,10 @@ public class ComputerPlayer : MonoBehaviour
         computerPiecesOutBoard = new List<PieceScriptVsComputer>(computerPieces);
     }
 
+    private void Update()
+    {
+        textCountComputerPieces.text = computerPieces.Count.ToString();
+    }
     public void TakeTurn()
     {
         StartCoroutine(ExecuteTurn());
@@ -155,22 +162,22 @@ public class ComputerPlayer : MonoBehaviour
         {
             CellScriptsVSComputer currentCell = piece.currentCell;
 
-            if (currentCell.cellLeft != null && currentCell.cellLeft.isOccupied && currentCell.cellLeft.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellLeft.cellLeft != null && !currentCell.cellLeft.cellLeft.isOccupied)
+            if (currentCell.cellLeft != null && currentCell.cellLeft.isOccupied && currentCell.cellLeft.currentPiece != null && currentCell.cellLeft.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellLeft.cellLeft != null && !currentCell.cellLeft.cellLeft.isOccupied)
             {
                 dirMovement = DirectionOfMovement.Left;
                 return currentCell.cellLeft;
             }
-            if (currentCell.cellRight != null && currentCell.cellRight.isOccupied && currentCell.cellRight.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellRight.cellRight != null && !currentCell.cellRight.cellRight.isOccupied)
+            if (currentCell.cellRight != null && currentCell.cellRight.isOccupied && currentCell.cellRight.currentPiece != null && currentCell.cellRight.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellRight.cellRight != null && !currentCell.cellRight.cellRight.isOccupied)
             {
                 dirMovement = DirectionOfMovement.Right;
                 return currentCell.cellRight;
             }
-            if (currentCell.cellAbove != null && currentCell.cellAbove.isOccupied && currentCell.cellAbove.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellAbove.cellAbove != null && !currentCell.cellAbove.cellAbove.isOccupied)
+            if (currentCell.cellAbove != null && currentCell.cellAbove.isOccupied && currentCell.cellAbove.currentPiece != null && currentCell.cellAbove.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellAbove.cellAbove != null && !currentCell.cellAbove.cellAbove.isOccupied)
             {
                 dirMovement = DirectionOfMovement.Above;
                 return currentCell.cellAbove;
             }
-            if (currentCell.cellBelow != null && currentCell.cellBelow.isOccupied && currentCell.cellBelow.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellBelow.cellBelow != null && !currentCell.cellBelow.cellBelow.isOccupied)
+            if (currentCell.cellBelow != null && currentCell.cellBelow.isOccupied && currentCell.cellBelow.currentPiece != null && currentCell.cellBelow.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellBelow.cellBelow != null && !currentCell.cellBelow.cellBelow.isOccupied)
             {
                 dirMovement = DirectionOfMovement.Below;
                 return currentCell.cellBelow;
@@ -264,7 +271,14 @@ public class ComputerPlayer : MonoBehaviour
         // Verificar se temos uma peça para mover
         if (pieceToMove != null)
         {
-            CellScriptsVSComputer cellWithPieceToCapture = FindDirectionOfCapture(pieceToMove.currentCell);
+            CellScriptsVSComputer cellWithPieceToCapture = null;
+            switch (dirMovement)
+            {
+                case DirectionOfMovement.Above: cellWithPieceToCapture = pieceToMove.currentCell.cellAbove; break;
+                case DirectionOfMovement.Below: cellWithPieceToCapture = pieceToMove.currentCell.cellBelow; break;
+                case DirectionOfMovement.Left: cellWithPieceToCapture = pieceToMove.currentCell.cellLeft; break;
+                case DirectionOfMovement.Right: cellWithPieceToCapture = pieceToMove.currentCell.cellRight; break;
+            }
 
             // Verificar se a célula de captura está ocupada
             if (cellWithPieceToCapture != null && cellWithPieceToCapture.isOccupied && cellWithPieceToCapture.currentPiece.isPlayerOnePiece != pieceToMove.isPlayerOnePiece)
@@ -275,22 +289,22 @@ public class ComputerPlayer : MonoBehaviour
                 // Mover e capturar com base na direção
                 if (dirMovement == DirectionOfMovement.Left && cellWithPieceToCapture.cellLeft != null)
                 {
-                    MovePieceAndCapture(pieceToMove, cellWithPieceToCapture, cellWithPieceToCapture.cellLeft);
+                    StartCoroutine(MovePieceAndCapture(pieceToMove, cellWithPieceToCapture, cellWithPieceToCapture.cellLeft));
                     capturedAPiece = true;
                 }
                 else if (dirMovement == DirectionOfMovement.Right && cellWithPieceToCapture.cellRight != null)
                 {
-                    MovePieceAndCapture(pieceToMove, cellWithPieceToCapture, cellWithPieceToCapture.cellRight);
+                    StartCoroutine(MovePieceAndCapture(pieceToMove, cellWithPieceToCapture, cellWithPieceToCapture.cellRight));
                     capturedAPiece = true;
                 }
                 else if (dirMovement == DirectionOfMovement.Above && cellWithPieceToCapture.cellAbove != null)
                 {
-                    MovePieceAndCapture(pieceToMove, cellWithPieceToCapture, cellWithPieceToCapture.cellAbove);
+                    StartCoroutine(MovePieceAndCapture(pieceToMove, cellWithPieceToCapture, cellWithPieceToCapture.cellAbove));
                     capturedAPiece = true;
                 }
                 else if (dirMovement == DirectionOfMovement.Below && cellWithPieceToCapture.cellBelow != null)
                 {
-                    MovePieceAndCapture(pieceToMove, cellWithPieceToCapture, cellWithPieceToCapture.cellBelow);
+                    StartCoroutine(MovePieceAndCapture(pieceToMove, cellWithPieceToCapture, cellWithPieceToCapture.cellBelow));
                     capturedAPiece = true;
                 }
 
@@ -337,20 +351,20 @@ public class ComputerPlayer : MonoBehaviour
     }
 
 
-    private void MovePieceAndCapture(PieceScriptVsComputer pieceToMove, CellScriptsVSComputer cellWithPieceToCapture, CellScriptsVSComputer targetCell)
+    IEnumerator MovePieceAndCapture(PieceScriptVsComputer pieceToMove, CellScriptsVSComputer cellWithPieceToCapture, CellScriptsVSComputer targetCell)
     {
         pieceToMove.currentCell.isOccupied = false;
         pieceToMove.currentCell.currentPiece = null;
         cellWithPieceToCapture.isOccupied = false;
         
 
-        StartCoroutine(MovePieceToCell(pieceToMove, targetCell));
+        yield return StartCoroutine(MovePieceToCell(pieceToMove, targetCell));
 
         if (GameManagerVsComputer.instance.ListOfpieceThatHasAnotherPieceToCapture.Contains(cellWithPieceToCapture.currentPiece))
         {
             GameManagerVsComputer.instance.ListOfpieceThatHasAnotherPieceToCapture.Remove(cellWithPieceToCapture.currentPiece);
         }
-
+        GameManagerVsComputer.instance.playerList[0].PlayerPieces.Remove(cellWithPieceToCapture.currentPiece);
         GameManagerVsComputer.instance.playerList[0].PlayerPiecesInside.Remove(cellWithPieceToCapture.currentPiece);
         Destroy(cellWithPieceToCapture.currentPiece.gameObject);
         cellWithPieceToCapture.currentPiece = null;
@@ -487,6 +501,7 @@ public class ComputerPlayer : MonoBehaviour
                     // Remove a peça capturada
                     adjacentPiece.currentCell.currentPiece = null;
                     adjacentPiece.currentCell.isOccupied = false;
+                    GameManagerVsComputer.instance.playerList[0].PlayerPieces.Remove(adjacentPiece);
                     GameManagerVsComputer.instance.playerList[0].PlayerPiecesInside.Remove(adjacentPiece);
                     Destroy(adjacentPiece.gameObject);
 
@@ -557,8 +572,5 @@ public class ComputerPlayer : MonoBehaviour
         }
     }
 
-    private void Update()
-    {
-        
-    }
+   
 }

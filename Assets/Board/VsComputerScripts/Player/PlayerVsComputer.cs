@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class PlayerVsComputer : MonoBehaviour
@@ -9,6 +10,7 @@ public class PlayerVsComputer : MonoBehaviour
 
     public bool isPlayerOne = false;
     public Material playerMaterial;
+    public TextMeshProUGUI textCountComputerPieces;
 
     void Awake()
     {
@@ -22,6 +24,8 @@ public class PlayerVsComputer : MonoBehaviour
 
     void Update()
     {
-        // Atualizações se necessário
+        
+            textCountComputerPieces.text = PlayerPieces.Count.ToString();
+        
     }
 }
