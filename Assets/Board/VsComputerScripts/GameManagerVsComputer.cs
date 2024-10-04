@@ -1,6 +1,9 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices.WindowsRuntime;
+using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManagerVsComputer : MonoBehaviour
 {
@@ -11,6 +14,8 @@ public class GameManagerVsComputer : MonoBehaviour
 
     public bool isPlayerOneTurn = true; // True se for a vez do jogador 1, False se for a vez do computador
 
+    [SerializeField] TextMeshProUGUI textPlayerWin;
+    [SerializeField] TextMeshProUGUI textPlayerLost;
     void Awake()
     {
         if (instance == null)
@@ -38,8 +43,48 @@ public class GameManagerVsComputer : MonoBehaviour
         isPlayerOneTurn = !isPlayerOneTurn;
         if (!isPlayerOneTurn)
         {
+            int HowManyPiecesComputerHasStucked = 0;
+            foreach (PieceScriptVsComputer piece in ComputerPlayer.instance.computerPiecesInBoard)
+            {
+
+                if (CheckIfPieceIsStuck(piece))
+                {
+                    HowManyPiecesComputerHasStucked++;
+                }
+            }
+
+            if (HowManyPiecesComputerHasStucked == ComputerPlayer.instance.computerPieces.Count)
+            {
+                Debug.Log("Player ganhou!");
+            }
+            else
+            {
+                HowManyPiecesComputerHasStucked = 0;
+                computerPlayer.TakeTurn();
+            }
             // Se for a vez do computador, chama o método TakeTurn do ComputerPlayer
-            computerPlayer.TakeTurn();
+            
+        }
+        else
+        {
+            int HowManyPiecesPlayerHasStucked = 0;
+            foreach (PieceScriptVsComputer piece in playerList[0].PlayerPiecesInside)
+            {
+                
+                if (CheckIfPieceIsStuck(piece))
+                {
+                    HowManyPiecesPlayerHasStucked++;
+                }
+            }
+
+            if(HowManyPiecesPlayerHasStucked == playerList[0].PlayerPieces.Count)
+            {
+                Debug.Log("Computador ganhou!");
+            }
+            else
+            {
+                HowManyPiecesPlayerHasStucked = 0;
+            }
         }
     }
 
@@ -225,6 +270,9 @@ public class GameManagerVsComputer : MonoBehaviour
         piece.GetComponent<PieceScriptVsComputer>().currentCell = null;
         Destroy(piece.gameObject);
         ComputerPlayer.instance.computerPieces.Remove(piece);
+
+        ComputerPlayer.instance.textCountComputerPieces.text = ComputerPlayer.instance.computerPieces.Count.ToString();
+        GameManagerVsComputer.instance.CheckIfComputerLost();
     }
 
     public string GetCaptureDirection(CellScriptsVSComputer startCell, CellScriptsVSComputer endCell)
@@ -325,5 +373,30 @@ public class GameManagerVsComputer : MonoBehaviour
         }
     }
 
+    public void CheckIfPlayerLost()
+    {
+        if (GameManagerVsComputer.instance.playerList[0].PlayerPieces.Count <= 0)
+        {
+            textPlayerLost.gameObject.SetActive(true);
+            Debug.Log("Player lost");
+            StartCoroutine(ReturnToMainMenuAfterDelay());
+        }
+    }
 
+    public void CheckIfComputerLost()
+    {
+        if (ComputerPlayer.instance.computerPieces.Count <= 0)
+        {
+            
+            textPlayerWin.gameObject.SetActive(true);
+            Debug.Log("Computer lost");
+            StartCoroutine(ReturnToMainMenuAfterDelay());
+        }
+    }
+
+    private IEnumerator ReturnToMainMenuAfterDelay()
+    {
+        yield return new WaitForSeconds(5); // Espera 5 segundos
+        SceneManager.LoadScene("LobbyScene"); // Carrega a cena do menu inicial
+    }
 }

@@ -22,10 +22,4 @@ public class PlayerVsComputer : MonoBehaviour
         // Inicialização se necessário
     }
 
-    void Update()
-    {
-        
-            textCountComputerPieces.text = PlayerPieces.Count.ToString();
-        
-    }
 }

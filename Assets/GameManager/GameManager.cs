@@ -1,5 +1,6 @@
 using Photon.Pun;
 using Photon.Realtime;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -118,12 +119,15 @@ public class GameManager : MonoBehaviourPunCallbacks
                 {
                     return false; // Há um espaço disponível à esquerda
                 }
-                else if (currentCell.cellLeft.isOccupied && currentCell.cellLeft.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
+                if (currentCell.cellLeft.currentPiece)
                 {
-                    // A célula à esquerda está ocupada por uma peça inimiga, verificar se pode capturar
-                    if (currentCell.cellLeft.cellLeft != null && !currentCell.cellLeft.cellLeft.isOccupied)
+                    if (currentCell.cellLeft.isOccupied && currentCell.cellLeft.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
                     {
-                        return false; // Pode capturar a peça inimiga à esquerda
+                        // A célula à esquerda está ocupada por uma peça inimiga, verificar se pode capturar
+                        if (currentCell.cellLeft.cellLeft != null && !currentCell.cellLeft.cellLeft.isOccupied)
+                        {
+                            return false; // Pode capturar a peça inimiga à esquerda
+                        }
                     }
                 }
             }
@@ -135,12 +139,15 @@ public class GameManager : MonoBehaviourPunCallbacks
                 {
                     return false; // Há um espaço disponível à direita
                 }
-                else if (currentCell.cellRight.isOccupied && currentCell.cellRight.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
+                if (currentCell.cellRight.currentPiece)
                 {
-                    // A célula à direita está ocupada por uma peça inimiga, verificar se pode capturar
-                    if (currentCell.cellRight.cellRight != null && !currentCell.cellRight.cellRight.isOccupied)
+                    if (currentCell.cellRight.isOccupied && currentCell.cellRight.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
                     {
-                        return false; // Pode capturar a peça inimiga à direita
+                        // A célula à direita está ocupada por uma peça inimiga, verificar se pode capturar
+                        if (currentCell.cellRight.cellRight != null && !currentCell.cellRight.cellRight.isOccupied)
+                        {
+                            return false; // Pode capturar a peça inimiga à direita
+                        }
                     }
                 }
             }
@@ -152,12 +159,15 @@ public class GameManager : MonoBehaviourPunCallbacks
                 {
                     return false; // Há um espaço disponível acima
                 }
-                else if (currentCell.cellAbove.isOccupied && currentCell.cellAbove.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
+                if (currentCell.cellAbove.currentPiece)
                 {
-                    // A célula acima está ocupada por uma peça inimiga, verificar se pode capturar
-                    if (currentCell.cellAbove.cellAbove != null && !currentCell.cellAbove.cellAbove.isOccupied)
+                    if (currentCell.cellAbove.isOccupied && currentCell.cellAbove.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
                     {
-                        return false; // Pode capturar a peça inimiga acima
+                        // A célula acima está ocupada por uma peça inimiga, verificar se pode capturar
+                        if (currentCell.cellAbove.cellAbove != null && !currentCell.cellAbove.cellAbove.isOccupied)
+                        {
+                            return false; // Pode capturar a peça inimiga acima
+                        }
                     }
                 }
             }
@@ -169,12 +179,15 @@ public class GameManager : MonoBehaviourPunCallbacks
                 {
                     return false; // Há um espaço disponível abaixo
                 }
-                else if (currentCell.cellBelow.isOccupied && currentCell.cellBelow.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
+                if (currentCell.cellBelow.currentPiece)
                 {
-                    // A célula abaixo está ocupada por uma peça inimiga, verificar se pode capturar
-                    if (currentCell.cellBelow.cellBelow != null && !currentCell.cellBelow.cellBelow.isOccupied)
+                    if (currentCell.cellBelow.isOccupied && currentCell.cellBelow.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece)
                     {
-                        return false; // Pode capturar a peça inimiga abaixo
+                        // A célula abaixo está ocupada por uma peça inimiga, verificar se pode capturar
+                        if (currentCell.cellBelow.cellBelow != null && !currentCell.cellBelow.cellBelow.isOccupied)
+                        {
+                            return false; // Pode capturar a peça inimiga abaixo
+                        }
                     }
                 }
             }
@@ -209,6 +222,45 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
 
         currentPlayerIndex = (currentPlayerIndex + 1) % 2;
+
+        int HowManyPiecesPlayerHasStucked = 0;
+        if(playerList[currentPlayerIndex].PlayerPiecesInside.Count > 0)
+        {
+            foreach (PieceScript piece in playerList[currentPlayerIndex].PlayerPiecesInside)
+            {
+
+                if (CheckIfPieceIsStuck(piece))
+                {
+                    HowManyPiecesPlayerHasStucked++;
+                }
+            }
+        }
+        
+
+        if (HowManyPiecesPlayerHasStucked == playerList[currentPlayerIndex].PlayerPieces.Count)
+        {
+            Debug.Log("Player ganhou!");
+
+            Player currentPlayer = playerList[currentPlayerIndex];
+            // Obtenha o ID do jogador atual
+            int localPlayerId = PhotonNetwork.LocalPlayer.ActorNumber;
+
+            // Determine a mensagem de acordo com quem perdeu todas as peças
+            string localPlayerMessage = currentPlayer.photonPlayer.ActorNumber == localPlayerId ? "You lost" : "You win";
+            string otherPlayerMessage = currentPlayer.photonPlayer.ActorNumber == localPlayerId ? "You win" : "You lost";
+
+            // Determine a mensagem de acordo com quem perdeu todas as peças
+            bool isLocalPlayer = currentPlayer.photonPlayer.ActorNumber == localPlayerId;
+            string message = isLocalPlayer ? "You lost" : "You won";
+            TextWinLost.gameObject.SetActive(true);
+            TextWinLost.text = message;
+            StartCoroutine(ReturnToMainMenuAfterDelay());
+            // Envie a mensagem correta para cada jogador
+            photonView.RPC("ShowEndGameMessage", RpcTarget.Others, localPlayerId, localPlayerMessage, otherPlayerMessage);
+        }
+        
+        
+
         UpdateCurrentPlayerText();
         UpdateButtonInteractable();
 
@@ -329,12 +381,11 @@ public class GameManager : MonoBehaviourPunCallbacks
         Player otherPlayer = playerList[piece.isPlayerOnePiece ? 1 : 0];
 
         // Envie o ViewID da peça e o ActorNumber do jogador que a possui
-        photonView.RPC("RemovePieceOnline", RpcTarget.All, piece.photonView.ViewID, currentPlayer.photonPlayer.ActorNumber, piece.currentCell.photonView.ViewID);
+        photonView.RPC("RemovePieceOnline", RpcTarget.Others, piece.photonView.ViewID, currentPlayer.photonPlayer.ActorNumber, piece.currentCell.photonView.ViewID);
 
         // Destroi a peça localmente
         Destroy(piece.gameObject);
-
-        // Verifique se o jogador atual (que perdeu a peça) tem menos de uma peça
+        // Verifique se o jogador atual (que perdeu a peça) tem menos de 12 peças
         if (currentPlayer.PlayerPieces.Count < 1)
         {
             Debug.Log($"{otherPlayer.photonPlayer.NickName} ganhou o jogo!"); // Mensagem de debug indicando que o outro jogador ganhou
@@ -348,20 +399,32 @@ public class GameManager : MonoBehaviourPunCallbacks
 
             // Determine a mensagem de acordo com quem perdeu todas as peças
             bool isLocalPlayer = currentPlayer.photonPlayer.ActorNumber == localPlayerId;
-            string message = isLocalPlayer ? "You lost" : "You win";
+            string message = isLocalPlayer ? "You lost" : "You won";
             TextWinLost.gameObject.SetActive(true);
             TextWinLost.text = message;
-            // Sai da sala atual
-            PhotonNetwork.LeaveRoom();
-
-            // Após sair da sala, desconecta do servidor
-            PhotonNetwork.Disconnect();
-            GoToMainMenu();
+            StartCoroutine(ReturnToMainMenuAfterDelay());
             // Envie a mensagem correta para cada jogador
             photonView.RPC("ShowEndGameMessage", RpcTarget.Others, localPlayerId, localPlayerMessage, otherPlayerMessage);
         }
     }
+    [PunRPC]
+    private void ShowEndGameMessage(int localPlayerId, string localPlayerMessage, string otherPlayerMessage)
+    {
 
+        // Obtenha o ID do jogador local
+        int localId = PhotonNetwork.LocalPlayer.ActorNumber;
+
+        // Determine a mensagem correta para o jogador local
+        string message = localId == localPlayerId ? localPlayerMessage : otherPlayerMessage;
+
+        // Aqui você pode adicionar a lógica para exibir a mensagem na UI
+        Debug.Log(message); // Apenas para debug, você pode substituir isso pela lógica da UI
+        TextWinLost.gameObject.SetActive(true);
+        TextWinLost.text = message; // Certifique-se de ter uma referência ao componente de texto UI
+                                    // Sai da sala atual
+        StartCoroutine(ReturnToMainMenuAfterDelay());
+
+    }
     [PunRPC]
     private void RemovePieceOnline(int pieceId, int playerActorNumber, int cellPieceId)
     {
@@ -384,10 +447,12 @@ public class GameManager : MonoBehaviourPunCallbacks
             // Opcional: Limpar referências nulas restantes na lista
             playerOfPiece.PlayerPiecesInside.RemoveAll(item => item == null);
         }
+
+        
     }
 
     // Função para encontrar a peça pelo ViewID
-    private PieceScript FindPieceById(int pieceId, Player player)
+    public PieceScript FindPieceById(int pieceId, Player player)
     {
         foreach (PieceScript piece in player.PlayerPiecesInside)
         {
@@ -400,7 +465,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
 
     // Função para encontrar o jogador pelo ActorNumber
-    private Player FindPlayerByActorNumber(int actorNumber)
+    public Player FindPlayerByActorNumber(int actorNumber)
     {
         foreach (Player player in GameManager.instance.playerList)
         {
@@ -412,7 +477,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         return null;
     }
     // Função para encontrar o jogador pelo ActorNumber
-    private CellScripts FindCellById(int piceId)
+    public CellScripts FindCellById(int piceId)
     {
         foreach (CellScripts cell in BoardManager.instance.allCells)
         {
@@ -424,28 +489,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         return null;
     }
 
-    [PunRPC]
-    private void ShowEndGameMessage(int localPlayerId, string localPlayerMessage, string otherPlayerMessage)
-    {
-
-        // Obtenha o ID do jogador local
-        int localId = PhotonNetwork.LocalPlayer.ActorNumber;
-
-        // Determine a mensagem correta para o jogador local
-        string message = localId == localPlayerId ? localPlayerMessage : otherPlayerMessage;
-
-        // Aqui você pode adicionar a lógica para exibir a mensagem na UI
-        Debug.Log(message); // Apenas para debug, você pode substituir isso pela lógica da UI
-        TextWinLost.gameObject.SetActive(true);
-        TextWinLost.text = message; // Certifique-se de ter uma referência ao componente de texto UI
-        // Sai da sala atual
-        PhotonNetwork.LeaveRoom();
-
-        // Após sair da sala, desconecta do servidor
-        PhotonNetwork.Disconnect();
-        GoToMainMenu();
-        
-    }
+   
     public int GetRow(CellScripts cell)
     {
         string[] parts = cell.name.Split('_');
@@ -559,18 +603,25 @@ public class GameManager : MonoBehaviourPunCallbacks
         // Exemplo: Mostrar uma mensagem na tela
         Debug.Log($"O outro jogador saiu da sala.");
 
-        // Sai da sala atual
-        PhotonNetwork.LeaveRoom();
-
-        // Após sair da sala, desconecta do servidor
-        PhotonNetwork.Disconnect();
+        
         GoToMainMenu();
         // Se você tem uma UI para notificação:
         // UIManager.Instance.ShowNotification($"{playerName} deixou o jogo.");
     }
     private void GoToMainMenu()
     {
-        SceneManager.LoadScene("LobbyScene");
+        StartCoroutine(ReturnToMainMenuAfterDelay());
+    }
+
+    private IEnumerator ReturnToMainMenuAfterDelay()
+    {
+        yield return new WaitForSeconds(5); // Espera 5 segundos
+        // Sai da sala atual
+        PhotonNetwork.LeaveRoom();
+
+        // Após sair da sala, desconecta do servidor
+        PhotonNetwork.Disconnect();
+        SceneManager.LoadScene("LobbyScene"); // Carrega a cena do menu inicial
     }
 }
 

@@ -16,6 +16,7 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
     public bool isPlayerOnePiece = false; // true = peças do jogador 1 (azul), false = peças do jogador 2 (vermelho)
     public bool isOutSide = true;
     private string lastCaptureDirection = "";
+    private int idplayerCurrent = -1;
 
     void Start()
     {
@@ -34,9 +35,10 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
         }
        
         int playerPlayingId = this.gameObject.tag == "Player1Piece" ? GameManager.instance.playerList[0].gameObject.GetComponent<PhotonView>().ViewID : GameManager.instance.playerList[1].gameObject.GetComponent<PhotonView>().ViewID;
-        
-        
-       
+        idplayerCurrent = playerPlayingId;
+
+
+
             GameManager.instance.VerifyIfHasNoPieceToCapture(isPlayerOnePiece, playerPlayingId);
         
         
@@ -174,11 +176,13 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
             transform.SetParent(cell.transform);
             cell.isOccupied = true;
             cell.currentPiece = this;
+            this.currentCell = cell;
         }
         int pieceid = this.gameObject.GetComponent<PhotonView>().ViewID;
         PieceScript pieceThis = PhotonView.Find(pieceid).GetComponent<PieceScript>();
 
         pieceThis.transform.SetParent(cell.transform);
+        pieceThis.transform.position = cell.transform.position;
         if(pieceThis.lastCell)
         pieceThis.lastCell.isOccupied = false;
 
@@ -236,7 +240,7 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
 
         
     }
-
+ 
     private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("Cell") && other.GetComponent<CellScripts>().currentPiece == null)

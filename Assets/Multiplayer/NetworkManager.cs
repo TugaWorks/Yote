@@ -10,52 +10,70 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public Button playButton;
     public Button hostButton;
     public Button joinButton;
+    public Button ComputerButton;
+    public Button cancelButton;
     public TMP_InputField roomCodeInputField;
     public TextMeshProUGUI statusText;
     public TextMeshProUGUI textJoinGameHint;
 
     private string roomCode;
     private bool isHosting = false;
-    
+    private bool isConnecting = false; // Flag para saber se está tentando conectar
     private void Start()
     {
         playButton.onClick.AddListener(OnPlayButtonClicked);
         hostButton.onClick.AddListener(OnHostButtonClicked);
         joinButton.onClick.AddListener(OnJoinButtonClicked);
+        cancelButton.onClick.AddListener(OnCancelButtonClicked);
         statusText.text = "";
         PhotonNetwork.AutomaticallySyncScene = true;
     }
 
     private void OnPlayButtonClicked()
     {
+        PlaySoundSelect();
         playButton.interactable = false;
         hostButton.interactable = false;
         joinButton.interactable = false;
+        ComputerButton.interactable = false;
         statusText.text = "Conectando ao servidor...";
         isHosting = false;
+        isConnecting = true; // Agora está conectando
+
+        cancelButton.gameObject.SetActive(true); // Esconde o botão de cancelar
         PhotonNetwork.ConnectUsingSettings();
     }
 
     private void OnHostButtonClicked()
     {
+        PlaySoundSelect();
         playButton.interactable = false;
         hostButton.interactable = false;
         joinButton.interactable = false;
+        ComputerButton.interactable = false;
         statusText.text = "Conectando ao servidor...";
         isHosting = true;
+        isConnecting = true; // Agora está conectando
+
+        cancelButton.gameObject.SetActive(true); // Esconde o botão de cancelar
         PhotonNetwork.ConnectUsingSettings();
     }
 
     private void OnJoinButtonClicked()
     {
+        PlaySoundSelect();
         string enteredRoomCode = roomCodeInputField.text;
         if (!string.IsNullOrEmpty(enteredRoomCode))
         {
+
             playButton.interactable = false;
             hostButton.interactable = false;
             joinButton.interactable = false;
+            ComputerButton.interactable = false;
             statusText.text = "Conectando ao servidor...";
             roomCode = enteredRoomCode;
+            isConnecting = true; // Agora está conectando
+            cancelButton.gameObject.SetActive(true); // Esconde o botão de cancelar
             PhotonNetwork.ConnectUsingSettings();
         }
         else
@@ -170,5 +188,24 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public void HideHintJoinGame()
     {
         textJoinGameHint.gameObject.SetActive(false);
+    }
+
+    // Método para cancelar a conexão
+    private void OnCancelButtonClicked()
+    {
+        if (isConnecting)
+        {
+            // Se está conectando, cancelar a conexão e reativar os botões
+            statusText.text = "Conexão cancelada.";
+            PhotonNetwork.Disconnect(); // Desconectar do Photon
+
+            // Reativar botões
+            playButton.interactable = true;
+            hostButton.interactable = true;
+            joinButton.interactable = true;
+            ComputerButton.interactable = true;
+            cancelButton.gameObject.SetActive(false); // Esconde o botão de cancelar
+            isConnecting = false; // Não está mais conectando
+        }
     }
 }

@@ -1,4 +1,6 @@
+using Photon.Pun;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -121,12 +123,12 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
                 SoundManager.instance.PlaySoundPiece();
                 currentCell.isOccupied = true;
                 currentCell.currentPiece = this;
-                transform.position = currentCell.transform.position;
+                transform.position = currentCell.transform.position + new Vector3(0,1,0);
                 
             }
             else
             {
-                transform.position = initialPosition;
+                transform.position = initialPosition + new Vector3(0, 1, 0);
                 if (!isOutSide)
                 {
                     currentCell = lastCell;
@@ -135,7 +137,7 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
         }
         else
         {
-            transform.position = initialPosition;
+            transform.position = initialPosition + new Vector3(0, 1, 0);
             if (!isOutSide)
             {
                 currentCell = lastCell;
@@ -153,10 +155,11 @@ public class PieceScriptVsComputer : MonoBehaviour, IPointerDownHandler, IDragHa
             PieceScriptVsComputer capturedPiece = middleCell.currentPiece;
             if (capturedPiece != null && capturedPiece.GetComponent<PieceScriptVsComputer>().isPlayerOnePiece != isPlayerOnePiece)
             {
-                ComputerPlayer.instance.computerPiecesInBoard.Remove(capturedPiece);
+                ComputerPlayer.instance.computerPiecesInBoard.Remove(capturedPiece); 
                 GameManagerVsComputer.instance.RemovePiece(capturedPiece);
                 lastCell.currentPiece = null;
                 lastCaptureDirection = GameManagerVsComputer.instance.GetCaptureDirection(lastCell, currentCell);
+                
                 return true;
             }
             return false;
