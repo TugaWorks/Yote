@@ -568,7 +568,99 @@ public class GameManager : MonoBehaviourPunCallbacks
             }
         }
 
+        // Chamar a função que modifica a lista antes do retorno
+        ModifyPieceListBasedOnCaptures(isPlayerOne);
+
         return ListOfpieceThatHasAnotherPieceToCapture.Count > 0;
+    }
+
+    // Função recursiva para contar capturas a partir de uma célula específica
+    public int CountCaptures(CellScripts currentCell, bool isPlayerOne)
+    {
+        int captureCount = 0;
+
+        // Verificar direções para capturar
+        captureCount += CheckAndCapture(currentCell, currentCell.cellAbove, currentCell.cellAbove?.cellAbove, isPlayerOne);
+        captureCount += CheckAndCapture(currentCell, currentCell.cellBelow, currentCell.cellBelow?.cellBelow, isPlayerOne);
+        captureCount += CheckAndCapture(currentCell, currentCell.cellLeft, currentCell.cellLeft?.cellLeft, isPlayerOne);
+        captureCount += CheckAndCapture(currentCell, currentCell.cellRight, currentCell.cellRight?.cellRight, isPlayerOne);
+
+        return captureCount;
+    }
+
+    // Função que verifica capturas e retorna o número de capturas subsequentes
+    private int CheckAndCapture(CellScripts currentCell, CellScripts nextCell, CellScripts afterNextCell, bool isPlayerOne)
+    {
+        if(nextCell != null) { 
+            if(nextCell.currentPiece != null) { 
+                if (nextCell != null && afterNextCell != null && nextCell.currentPiece.isPlayerOnePiece && !afterNextCell.isOccupied)
+                {
+                    // Simular a captura removendo a peça capturada e contar capturas subsequentes
+                    PieceScript capturedPiece = nextCell.currentPiece;
+                    nextCell.currentPiece = null; // Remover a peça capturada
+
+                    // Contar capturas subsequentes
+                    int furtherCaptures = 1 + CountCaptures(afterNextCell, isPlayerOne);
+
+                    // Restaurar a peça capturada (para não modificar o estado do jogo)
+                    nextCell.currentPiece = capturedPiece;
+
+                    return furtherCaptures;
+                }
+            }
+        }
+        return 0;
+    }
+
+    // Função que altera a lista de peças com base nas capturas recursivas
+    public void ModifyPieceListBasedOnCaptures(bool isPlayerOne)
+    {
+        List<PieceScript> piecesWithMostCaptures = new List<PieceScript>();
+        Dictionary<PieceScript, int> pieceWithMostCapturesAndTheValue = new Dictionary<PieceScript, int>();
+        int maxCaptures = 0; // Variável para armazenar o número máximo de capturas
+
+        // Itera pela lista de peças que podem capturar
+        foreach (PieceScript piece in ListOfpieceThatHasAnotherPieceToCapture)
+        {
+            CellScripts currentCell = piece.GetComponent<PieceScript>().currentCell;
+
+            if (currentCell != null)
+            {
+                // Conta capturas subsequentes
+                int captureCount = CountCaptures(currentCell, isPlayerOne);
+
+                // Se encontrarmos uma peça com mais capturas, atualizamos a lista
+                if (captureCount >= maxCaptures)
+                {
+                    maxCaptures = captureCount;
+                    piecesWithMostCaptures.Clear(); // Remove peças anteriores
+                    piecesWithMostCaptures.Add(piece); // Adiciona a peça com o novo máximo
+                    pieceWithMostCapturesAndTheValue.Add(piece, captureCount);
+
+                    if (captureCount >= maxCaptures)
+                    {
+                        maxCaptures = captureCount;
+                    }
+                }
+                // Se a peça tem o mesmo número de capturas máximas, adiciona à lista
+                else if (captureCount == maxCaptures)
+                {
+                    piecesWithMostCaptures.Add(piece);
+                }
+            }
+        }
+
+        // Atualiza a lista original com as peças que têm o maior número de capturas
+        ListOfpieceThatHasAnotherPieceToCapture.Clear();
+
+        // Adiciona todas as peças que têm o número máximo de capturas
+        foreach (var entry in pieceWithMostCapturesAndTheValue)
+        {
+            if (entry.Value == maxCaptures)
+            {
+                ListOfpieceThatHasAnotherPieceToCapture.Add(entry.Key);
+            }
+        }
     }
 
     private void CheckAndAddPieceToCaptureList(CellScripts currentCell, CellScripts adjacentCell, CellScripts cellBeyond, bool isPlayerOne, PieceScript piece)

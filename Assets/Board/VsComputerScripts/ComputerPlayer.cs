@@ -5,7 +5,7 @@ using System;
 using System.Linq;
 using TMPro;
 
-enum DirectionOfMovement
+public enum DirectionOfMovement
 {
     Right,
     Left,
@@ -263,6 +263,9 @@ public class ComputerPlayer : MonoBehaviour
     }
     private bool DecideIfCanCapturePiece()
     {
+        List<PieceScriptVsComputer> piecesThatHasPiecesToCapture = new List<PieceScriptVsComputer>();
+
+        List<DirectionOfMovement> piecesThatHasPiecesToCaptureAndDirection = new List<DirectionOfMovement>();
         bool IsPieceStuck = false;
         if (currentPieceToMove)
         {
@@ -285,17 +288,131 @@ public class ComputerPlayer : MonoBehaviour
                     bool IsPieceStuckOther = GameManagerVsComputer.instance.CheckIfPieceIsStuck(piece);
                     if (CanCapture(piece) && !IsPieceStuckOther)
                     {
-                        // Se houver uma peça que pode capturar, não colocar uma nova peça
-                        currentPieceToMove = piece;
-                        return true;
+                        piecesThatHasPiecesToCapture.Add(piece);
+                        piecesThatHasPiecesToCaptureAndDirection.Add(dirMovement);
                     }
                 }
             }
+
+            ModifyPieceListBasedOnCaptures(piecesThatHasPiecesToCapture, piecesThatHasPiecesToCaptureAndDirection);
+            int randoPieceFrompiecesThatHasPiecesToCapture = 0;
+            
+
+            if (piecesThatHasPiecesToCapture.Count > 0)
+            {
+                randoPieceFrompiecesThatHasPiecesToCapture = UnityEngine.Random.Range(0, piecesThatHasPiecesToCapture.Count);
+                currentPieceToMove = piecesThatHasPiecesToCapture[randoPieceFrompiecesThatHasPiecesToCapture];
+                dirMovement = piecesThatHasPiecesToCaptureAndDirection[randoPieceFrompiecesThatHasPiecesToCapture];
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+            
         }
         
 
         // Se nenhuma peça puder capturar, decidir aleatoriamente
         return false;
+    }
+
+
+    // Função recursiva para contar capturas a partir de uma célula específica
+    public int CountCaptures(CellScriptsVSComputer currentCell, bool isPlayerOne)
+    {
+        int captureCount = 0;
+
+        // Verificar direções para capturar
+        captureCount += CheckAndCapture(currentCell, currentCell.cellAbove, currentCell.cellAbove?.cellAbove, isPlayerOne);
+        captureCount += CheckAndCapture(currentCell, currentCell.cellBelow, currentCell.cellBelow?.cellBelow, isPlayerOne);
+        captureCount += CheckAndCapture(currentCell, currentCell.cellLeft, currentCell.cellLeft?.cellLeft, isPlayerOne);
+        captureCount += CheckAndCapture(currentCell, currentCell.cellRight, currentCell.cellRight?.cellRight, isPlayerOne);
+
+        return captureCount;
+    }
+
+    // Função que verifica capturas e retorna o número de capturas subsequentes
+    private int CheckAndCapture(CellScriptsVSComputer currentCell, CellScriptsVSComputer nextCell, CellScriptsVSComputer afterNextCell, bool isPlayerOne)
+    {
+        if (nextCell != null)
+        {
+            if (nextCell.currentPiece != null)
+            {
+                if (nextCell != null && afterNextCell != null && nextCell.currentPiece.isPlayerOnePiece && !afterNextCell.isOccupied)
+                {
+                    // Simular a captura removendo a peça capturada e contar capturas subsequentes
+                    PieceScriptVsComputer capturedPiece = nextCell.currentPiece;
+                    nextCell.currentPiece = null; // Remover a peça capturada
+
+                    // Contar capturas subsequentes
+                    int furtherCaptures = 1 + CountCaptures(afterNextCell, isPlayerOne);
+
+                    // Restaurar a peça capturada (para não modificar o estado do jogo)
+                    nextCell.currentPiece = capturedPiece;
+
+                    return furtherCaptures;
+                }
+            }
+        }
+        return 0;
+    }
+
+    // Função que altera a lista de peças com base nas capturas recursivas
+    public void ModifyPieceListBasedOnCaptures(List<PieceScriptVsComputer> ListOfpieceThatHasAnotherPieceToCapture,List<DirectionOfMovement> directionsOfMovement)
+    {
+        List<PieceScriptVsComputer> piecesWithMostCaptures = new List<PieceScriptVsComputer>();
+        Dictionary<PieceScriptVsComputer, int> pieceWithMostCapturesAndTheValue = new Dictionary<PieceScriptVsComputer, int>();
+        int maxCaptures = 0; // Variável para armazenar o número máximo de capturas
+
+        int currentPieceIndex = 0;
+        List<DirectionOfMovement> directionsOfMovementToRefresh = new List<DirectionOfMovement>();
+        // Itera pela lista de peças que podem capturar
+        foreach (PieceScriptVsComputer piece in ListOfpieceThatHasAnotherPieceToCapture)
+        {
+            CellScriptsVSComputer currentCell = piece.GetComponent<PieceScriptVsComputer>().currentCell;
+
+            if (currentCell != null)
+            {
+                // Conta capturas subsequentes
+                int captureCount = CountCaptures(currentCell, piece.isPlayerOnePiece);
+
+                // Se encontrarmos uma peça com mais capturas, atualizamos a lista
+                if (captureCount >= maxCaptures)
+                {
+                    maxCaptures = captureCount;
+                    piecesWithMostCaptures.Clear(); // Remove peças anteriores
+                    piecesWithMostCaptures.Add(piece); // Adiciona a peça com o novo máximo
+                    directionsOfMovementToRefresh.Add(directionsOfMovement[currentPieceIndex]);
+                    currentPieceIndex++;
+                    pieceWithMostCapturesAndTheValue.Add(piece, captureCount);
+
+                    if (captureCount >= maxCaptures)
+                    {
+                        maxCaptures = captureCount;
+                    }
+                }
+                // Se a peça tem o mesmo número de capturas máximas, adiciona à lista
+                else if (captureCount == maxCaptures)
+                {
+                    piecesWithMostCaptures.Add(piece);
+                }
+            }
+        }
+
+        // Atualiza a lista original com as peças que têm o maior número de capturas
+        ListOfpieceThatHasAnotherPieceToCapture.Clear();
+
+        // Adiciona todas as peças que têm o número máximo de capturas
+        foreach (var entry in pieceWithMostCapturesAndTheValue)
+        {
+            if (entry.Value == maxCaptures)
+            {
+                ListOfpieceThatHasAnotherPieceToCapture.Add(entry.Key);
+            }
+        }
+
+        directionsOfMovement = directionsOfMovementToRefresh;
     }
 
     private CellScriptsVSComputer CanCapture(PieceScriptVsComputer piece)

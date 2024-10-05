@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using TMPro;
 using UnityEngine;
@@ -313,51 +314,127 @@ public class GameManagerVsComputer : MonoBehaviour
     public List<PieceScriptVsComputer> ListOfpieceThatHasAnotherPieceToCapture = new List<PieceScriptVsComputer>();
     public bool VerifyIfHasNoPieceToCapture(bool isPlayerOne)
     {
-        for(int i = 0; i < ListOfpieceThatHasAnotherPieceToCapture.Count; i++)
-        {
-            ListOfpieceThatHasAnotherPieceToCapture.Remove(ListOfpieceThatHasAnotherPieceToCapture[i]);
-        }
+        // Limpa a lista antes de verificar
+        ListOfpieceThatHasAnotherPieceToCapture.Clear();
 
-        foreach (PieceScriptVsComputer piece in playerList[0].PlayerPiecesInside)
+        // Verifica todas as peças do jogador
+        foreach (PieceScriptVsComputer piece in playerList[0].PlayerPieces)
         {
-            CellScriptsVSComputer currentCell = piece.currentCell;
-            if (currentCell)
+            if (piece)
             {
+                if (!piece.isOutSide)
+                {
+                    CellScriptsVSComputer currentCell = piece.GetComponent<PieceScriptVsComputer>().currentCell;
 
-           
-                if(currentCell.cellAbove != null && currentCell.cellAbove.currentPiece != null && currentCell.cellAbove.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellAbove.isOccupied && currentCell.cellAbove.cellAbove != null && !currentCell.cellAbove.cellAbove.isOccupied &&  !ListOfpieceThatHasAnotherPieceToCapture.Contains(piece))
-                {
-                    ListOfpieceThatHasAnotherPieceToCapture.Add(piece);
-                }
-                if (currentCell.cellBelow != null && currentCell.cellBelow.currentPiece != null && currentCell.cellBelow.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellBelow.isOccupied && currentCell.cellBelow.cellBelow != null && !currentCell.cellBelow.cellBelow.isOccupied && !ListOfpieceThatHasAnotherPieceToCapture.Contains(piece))
-                {
-                    ListOfpieceThatHasAnotherPieceToCapture.Add(piece);
-                }
-                if (currentCell.cellLeft != null && currentCell.cellLeft.currentPiece != null && currentCell.cellLeft.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellLeft.isOccupied &&  currentCell.cellLeft.cellLeft != null && !currentCell.cellLeft.cellLeft.isOccupied && !ListOfpieceThatHasAnotherPieceToCapture.Contains(piece))
-                {
-                    ListOfpieceThatHasAnotherPieceToCapture.Add(piece);
-                }
-                if (currentCell.cellRight != null && currentCell.cellRight.currentPiece != null && currentCell.cellRight.currentPiece.isPlayerOnePiece != piece.isPlayerOnePiece && currentCell.cellRight.isOccupied && currentCell.cellRight.cellRight != null && !currentCell.cellRight.cellRight.isOccupied && !ListOfpieceThatHasAnotherPieceToCapture.Contains(piece) )
-                {
-                    ListOfpieceThatHasAnotherPieceToCapture.Add(piece);
+                    if (currentCell != null)
+                    {
+                        // Verificar direções para capturar
+                        CheckAndAddPieceToCaptureList(currentCell, currentCell.cellAbove, currentCell.cellAbove?.cellAbove, isPlayerOne, piece.GetComponent<PieceScriptVsComputer>());
+                        CheckAndAddPieceToCaptureList(currentCell, currentCell.cellBelow, currentCell.cellBelow?.cellBelow, isPlayerOne, piece.GetComponent<PieceScriptVsComputer>());
+                        CheckAndAddPieceToCaptureList(currentCell, currentCell.cellLeft, currentCell.cellLeft?.cellLeft, isPlayerOne, piece.GetComponent<PieceScriptVsComputer>());
+                        CheckAndAddPieceToCaptureList(currentCell, currentCell.cellRight, currentCell.cellRight?.cellRight, isPlayerOne, piece.GetComponent<PieceScriptVsComputer>());
+                    }
                 }
             }
-            //if (currentCell != null)
-            //{
-            //    switch (piece.lastCaptureDirection)
-            //    {
-            //        // Verificar direções para capturar
-            //        case "Above": CheckAndAddPieceToCaptureList(currentCell, currentCell.cellAbove, currentCell.cellAbove?.cellAbove, isPlayerOne, piece); break;
-            //        case "Below": CheckAndAddPieceToCaptureList(currentCell, currentCell.cellBelow, currentCell.cellBelow?.cellBelow, isPlayerOne, piece); break;
-            //        case "Left": CheckAndAddPieceToCaptureList(currentCell, currentCell.cellLeft, currentCell.cellLeft?.cellLeft, isPlayerOne, piece); break;
-            //        case "Right": CheckAndAddPieceToCaptureList(currentCell, currentCell.cellRight, currentCell.cellRight?.cellRight, isPlayerOne, piece); break;
-            //    }
-            //}
+
         }
+        // Chamar a função que modifica a lista antes do retorno
+        ModifyPieceListBasedOnCaptures(isPlayerOne);
 
         return ListOfpieceThatHasAnotherPieceToCapture.Count > 0;
     }
 
+
+    // Função recursiva para contar capturas a partir de uma célula específica
+    public int CountCaptures(CellScriptsVSComputer currentCell, bool isPlayerOne)
+    {
+        int captureCount = 0;
+
+        // Verificar direções para capturar
+        captureCount += CheckAndCapture(currentCell, currentCell.cellAbove, currentCell.cellAbove?.cellAbove, isPlayerOne);
+        captureCount += CheckAndCapture(currentCell, currentCell.cellBelow, currentCell.cellBelow?.cellBelow, isPlayerOne);
+        captureCount += CheckAndCapture(currentCell, currentCell.cellLeft, currentCell.cellLeft?.cellLeft, isPlayerOne);
+        captureCount += CheckAndCapture(currentCell, currentCell.cellRight, currentCell.cellRight?.cellRight, isPlayerOne);
+
+        return captureCount;
+    }
+
+    // Função que verifica capturas e retorna o número de capturas subsequentes
+    private int CheckAndCapture(CellScriptsVSComputer currentCell, CellScriptsVSComputer nextCell, CellScriptsVSComputer afterNextCell, bool isPlayerOne)
+    {
+        if (nextCell != null)
+        {
+            if (nextCell.currentPiece != null)
+            {
+                if (nextCell != null && afterNextCell != null && nextCell.currentPiece.isPlayerOnePiece && !afterNextCell.isOccupied)
+                {
+                    // Simular a captura removendo a peça capturada e contar capturas subsequentes
+                    PieceScriptVsComputer capturedPiece = nextCell.currentPiece;
+                    nextCell.currentPiece = null; // Remover a peça capturada
+
+                    // Contar capturas subsequentes
+                    int furtherCaptures = 1 + CountCaptures(afterNextCell, isPlayerOne);
+
+                    // Restaurar a peça capturada (para não modificar o estado do jogo)
+                    nextCell.currentPiece = capturedPiece;
+
+                    return furtherCaptures;
+                }
+            }
+        }
+        return 0;
+    }
+
+    // Função que altera a lista de peças com base nas capturas recursivas
+    public void ModifyPieceListBasedOnCaptures(bool isPlayerOne)
+    {
+        List<PieceScriptVsComputer> piecesWithMostCaptures = new List<PieceScriptVsComputer>();
+        Dictionary<PieceScriptVsComputer, int> pieceWithMostCapturesAndTheValue = new Dictionary<PieceScriptVsComputer, int>();
+        int maxCaptures = 0; // Variável para armazenar o número máximo de capturas
+
+        // Itera pela lista de peças que podem capturar
+        foreach (PieceScriptVsComputer piece in ListOfpieceThatHasAnotherPieceToCapture)
+        {
+            CellScriptsVSComputer currentCell = piece.GetComponent<PieceScriptVsComputer>().currentCell;
+
+            if (currentCell != null)
+            {
+                // Conta capturas subsequentes
+                int captureCount = CountCaptures(currentCell, isPlayerOne);
+
+                // Se encontrarmos uma peça com mais capturas, atualizamos a lista
+                if (captureCount >= maxCaptures)
+                {
+                    maxCaptures = captureCount;
+                    piecesWithMostCaptures.Clear(); // Remove peças anteriores
+                    piecesWithMostCaptures.Add(piece); // Adiciona a peça com o novo máximo
+                    pieceWithMostCapturesAndTheValue.Add(piece, captureCount);
+
+                    if (captureCount >= maxCaptures)
+                    {
+                        maxCaptures = captureCount;
+                    }
+                }
+                // Se a peça tem o mesmo número de capturas máximas, adiciona à lista
+                else if (captureCount == maxCaptures)
+                {
+                    piecesWithMostCaptures.Add(piece);
+                }
+            }
+        }
+
+        // Atualiza a lista original com as peças que têm o maior número de capturas
+        ListOfpieceThatHasAnotherPieceToCapture.Clear();
+
+        // Adiciona todas as peças que têm o número máximo de capturas
+        foreach (var entry in pieceWithMostCapturesAndTheValue)
+        {
+            if (entry.Value == maxCaptures)
+            {
+                ListOfpieceThatHasAnotherPieceToCapture.Add(entry.Key);
+            }
+        }
+    }
     private void CheckAndAddPieceToCaptureList(CellScriptsVSComputer currentCell, CellScriptsVSComputer adjacentCell, CellScriptsVSComputer cellBeyond, bool isPlayerOne, PieceScriptVsComputer piece)
     {
         if (adjacentCell != null && adjacentCell.currentPiece != null && cellBeyond != null && cellBeyond.currentPiece == null)
