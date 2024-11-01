@@ -1,5 +1,6 @@
 using Photon.Pun;
 using Photon.Realtime;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -223,10 +224,23 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         currentPlayerIndex = (currentPlayerIndex + 1) % 2;
 
-        int HowManyPiecesPlayerHasStucked = 0;
-        if(playerList[currentPlayerIndex].PlayerPiecesInside.Count > 0)
+
+        int opponentPlayerIndex = -1;
+        if (playerList[0].photonPlayer == PhotonNetwork.PlayerList[0] && playerList[0].photonPlayer.ActorNumber != PhotonNetwork.LocalPlayer.ActorNumber)
         {
-            foreach (PieceScript piece in playerList[currentPlayerIndex].PlayerPiecesInside)
+            // Verificar o jogador oponente (anterior)
+            opponentPlayerIndex = 0;
+        }
+        else
+        {
+            opponentPlayerIndex = 1;
+        }
+
+        
+        int HowManyPiecesPlayerHasStucked = 0;
+        if (playerList[opponentPlayerIndex].PlayerPiecesInside.Count > 0)
+        {
+            foreach (PieceScript piece in playerList[opponentPlayerIndex].PlayerPiecesInside)
             {
 
                 if (CheckIfPieceIsStuck(piece))
@@ -235,13 +249,13 @@ public class GameManager : MonoBehaviourPunCallbacks
                 }
             }
         }
-        
+        //Debug.Log("Other player stucked pieces" + HowManyPiecesPlayerHasStucked + " and player total PIECES :" + playerList[opponentPlayerIndex].PlayerPieces.Count.ToString());
 
-        if (HowManyPiecesPlayerHasStucked == playerList[currentPlayerIndex].PlayerPieces.Count)
+        if (HowManyPiecesPlayerHasStucked == playerList[opponentPlayerIndex].PlayerPieces.Count)
         {
             Debug.Log("Player ganhou!");
 
-            Player currentPlayer = playerList[currentPlayerIndex];
+            Player currentPlayer = playerList[opponentPlayerIndex];
             // Obtenha o ID do jogador atual
             int localPlayerId = PhotonNetwork.LocalPlayer.ActorNumber;
 
@@ -254,9 +268,10 @@ public class GameManager : MonoBehaviourPunCallbacks
             string message = isLocalPlayer ? "You lost" : "You won";
             TextWinLost.gameObject.SetActive(true);
             TextWinLost.text = message;
+            photonView.RPC("ShowEndGameMessage", RpcTarget.Others, localPlayerId, localPlayerMessage, otherPlayerMessage);
             StartCoroutine(ReturnToMainMenuAfterDelay());
             // Envie a mensagem correta para cada jogador
-            photonView.RPC("ShowEndGameMessage", RpcTarget.Others, localPlayerId, localPlayerMessage, otherPlayerMessage);
+            
         }
         
         
@@ -402,9 +417,10 @@ public class GameManager : MonoBehaviourPunCallbacks
             string message = isLocalPlayer ? "You lost" : "You won";
             TextWinLost.gameObject.SetActive(true);
             TextWinLost.text = message;
-            StartCoroutine(ReturnToMainMenuAfterDelay());
+            
             // Envie a mensagem correta para cada jogador
             photonView.RPC("ShowEndGameMessage", RpcTarget.Others, localPlayerId, localPlayerMessage, otherPlayerMessage);
+            StartCoroutine(ReturnToMainMenuAfterDelay());
         }
     }
     [PunRPC]
@@ -422,7 +438,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         TextWinLost.gameObject.SetActive(true);
         TextWinLost.text = message; // Certifique-se de ter uma referência ao componente de texto UI
                                     // Sai da sala atual
-        StartCoroutine(ReturnToMainMenuAfterDelay());
+        StartCoroutine(ReturnToMainMenu());
 
     }
     [PunRPC]
@@ -439,6 +455,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             // Primeiro, remova a peça da lista de peças
             playerOfPiece.PlayerPiecesInside.Remove(pieceToRemove);
+            playerOfPiece.PlayerPieces.Remove(pieceToRemove);
             cell.currentPiece = null;
             cell.isOccupied = false;
             // Destrua a peça depois de removê-la da lista
@@ -667,7 +684,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         if (adjacentCell != null && adjacentCell.currentPiece != null && cellBeyond != null && cellBeyond.currentPiece == null)
         {
-            if (adjacentCell.currentPiece.isPlayerOnePiece != isPlayerOne)
+            if (adjacentCell.currentPiece.isPlayerOnePiece != isPlayerOne && cellBeyond != null && cellBeyond.currentPiece == null && cellBeyond.isOccupied == false)
             {
                 if (!ListOfpieceThatHasAnotherPieceToCapture.Contains(piece))
                 {
@@ -707,13 +724,105 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     private IEnumerator ReturnToMainMenuAfterDelay()
     {
-        yield return new WaitForSeconds(5); // Espera 5 segundos
-        // Sai da sala atual
-        PhotonNetwork.LeaveRoom();
+        yield return new WaitForSeconds(3f); // Espera 3 segundos antes de iniciar o processo de saída
 
-        // Após sair da sala, desconecta do servidor
-        PhotonNetwork.Disconnect();
+        if (PhotonNetwork.IsConnectedAndReady) // Verifica se o cliente está conectado e pronto
+        {
+            Debug.Log("Tentando sair da sala...");
+
+            // Sai da sala se estiver na sala
+            if (PhotonNetwork.InRoom)
+            {
+                PhotonNetwork.LeaveRoom();
+
+                // Aguarda até o jogador ter saído da sala
+                while (PhotonNetwork.InRoom)
+                {
+                    yield return null; // Aguarda até que o jogador tenha saído
+                }
+
+                Debug.Log("Saiu da sala.");
+            }
+
+            // Agora que saiu da sala, desconecta do servidor
+            PhotonNetwork.Disconnect();
+        }
+        else
+        {
+            Debug.Log("Cliente não está conectado ou não está pronto.");
+            // Se já não estiver conectado, pode carregar a cena do Lobby diretamente
+            SceneManager.LoadScene("LobbyScene");
+        }
+    }
+
+    private IEnumerator ReturnToMainMenu()
+    {
+        yield return new WaitForSeconds(3f);
+        
         SceneManager.LoadScene("LobbyScene"); // Carrega a cena do menu inicial
+    }
+    public GameObject textRules;
+    public void ShowRules()
+    {
+        if(textRules.gameObject.active == false)
+        {
+            textRules.gameObject.SetActive(true);
+        }
+        else
+        {
+            textRules.gameObject.SetActive(false);
+        }
+        
+    }
+
+    public void HideRules()
+    {
+        textRules.gameObject.SetActive(false);
+    }
+
+    public void BackToMainMenu()
+    {
+        SoundManager.instance.PlaySoundSelect();
+
+        if (PhotonNetwork.IsConnectedAndReady) // Verifica se o cliente está conectado e pronto
+        {
+            Debug.Log("Tentando sair da sala...");
+
+            // Sai da sala se estiver na sala
+            if (PhotonNetwork.InRoom)
+            {
+                PhotonNetwork.LeaveRoom();
+
+
+                Debug.Log("Saiu da sala.");
+            }
+
+            // Agora que saiu da sala, desconecta do servidor
+            PhotonNetwork.Disconnect();
+        }
+        else
+        {
+            Debug.Log("Cliente não está conectado ou não está pronto.");
+            // Se já não estiver conectado, pode carregar a cena do Lobby diretamente
+            SceneManager.LoadScene("LobbyScene");
+        }
+    }
+
+    // Callback chamado quando o jogador sai da sala
+    public override void OnLeftRoom()
+    {
+        Debug.Log("Saiu da sala, agora desconectando.");
+
+        // Se o cliente ainda está conectado, desconecta
+        if (PhotonNetwork.IsConnectedAndReady)
+        {
+            PhotonNetwork.Disconnect();
+        }
+        else
+        {
+            Debug.Log("Já desconectado, voltando para o menu.");
+            SceneManager.LoadScene("LobbyScene"); // Força o carregamento da cena se já estiver desconectado
+        }
     }
 }
 

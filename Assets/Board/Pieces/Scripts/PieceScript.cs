@@ -34,7 +34,7 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
             return; // Não é a vez do jogador atual ou peça não pertence ao jogador atual
         }
        
-        int playerPlayingId = this.gameObject.tag == "Player1Piece" ? GameManager.instance.playerList[0].gameObject.GetComponent<PhotonView>().ViewID : GameManager.instance.playerList[1].gameObject.GetComponent<PhotonView>().ViewID;
+        int playerPlayingId = this.gameObject.tag == "PiecePlayer1" ? GameManager.instance.playerList[0].gameObject.GetComponent<PhotonView>().ViewID : GameManager.instance.playerList[1].gameObject.GetComponent<PhotonView>().ViewID;
         idplayerCurrent = playerPlayingId;
 
 
@@ -102,7 +102,7 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
                 }
                 if (isOutSide)
                 {
-                    int playerPlayingId = this.gameObject.tag == "Player1Piece" ? GameManager.instance.playerList[0].gameObject.GetComponent<PhotonView>().ViewID : GameManager.instance.playerList[1].gameObject.GetComponent<PhotonView>().ViewID;
+                    int playerPlayingId = this.gameObject.tag == "PiecePlayer1" ? GameManager.instance.playerList[0].gameObject.GetComponent<PhotonView>().ViewID : GameManager.instance.playerList[1].gameObject.GetComponent<PhotonView>().ViewID;
                     Player playerPlaying = PhotonView.Find(playerPlayingId).GetComponent<Player>();
                     playerPlaying.PlayerPiecesInside.Add(this);
                     GameManager.instance.EndTurn();
@@ -132,7 +132,7 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
                
 
                 // Atualizar a posição para todos os jogadores
-                photonView.RPC("RPC_UpdatePiecePosition", RpcTarget.All, transform.position, currentCell.gameObject.GetComponent<PhotonView>().ViewID);
+                photonView.RPC("RPC_UpdatePiecePosition", RpcTarget.Others, transform.position, currentCell.gameObject.GetComponent<PhotonView>().ViewID);
                 lastCell = currentCell;
                 initialPosition = currentCell.transform.position;
                 isOutSide = false;
@@ -180,6 +180,11 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
         }
         int pieceid = this.gameObject.GetComponent<PhotonView>().ViewID;
         PieceScript pieceThis = PhotonView.Find(pieceid).GetComponent<PieceScript>();
+        int playerPlayingId = this.gameObject.tag == "PiecePlayer1" ? GameManager.instance.playerList[0].gameObject.GetComponent<PhotonView>().ViewID : GameManager.instance.playerList[1].gameObject.GetComponent<PhotonView>().ViewID;
+        Player playerPlaying = PhotonView.Find(playerPlayingId).GetComponent<Player>();
+        if (!playerPlaying.PlayerPiecesInside.Contains(this)) { 
+            playerPlaying.PlayerPiecesInside.Add(this);
+        }
 
         pieceThis.transform.SetParent(cell.transform);
         pieceThis.transform.position = cell.transform.position;
@@ -214,9 +219,20 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
                 Debug.Log("Direction of capture: " + lastCaptureDirection);
                 photonView.RPC("RPC_UpdateLastCellState", RpcTarget.All, lastCell.photonView.ViewID);
                 // Atualizar a remoção da peça capturada para todos os jogadores
-                photonView.RPC("RPC_RemoveCapturedPiece", RpcTarget.All, capturedPiece.photonView.ViewID);
-                
-                
+                photonView.RPC("RPC_RemoveCapturedPiece", RpcTarget.Others, capturedPiece.photonView.ViewID);
+
+                capturedPiece.currentCell.isOccupied = false;
+                if (capturedPiece.lastCell) capturedPiece.lastCell.isOccupied = false;
+                if (capturedPiece.lastCell) capturedPiece.lastCell.isOccupied = false;
+
+                int playerPlayingId = this.gameObject.tag == "Player1Piece" ? GameManager.instance.playerList[0].gameObject.GetComponent<PhotonView>().ViewID : GameManager.instance.playerList[1].gameObject.GetComponent<PhotonView>().ViewID;
+                foreach (Player p in GameManager.instance.playerList)
+                {
+                    if (p.GetComponent<PhotonView>().ViewID == playerPlayingId)
+                    {
+                        p.PlayerPiecesInside.Remove(capturedPiece.GetComponent<PieceScript>());
+                    }
+                }
                 //GameManager.instance.RemovePiece(capturedPiece);
                 return true;
             }
@@ -235,6 +251,9 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
             piece.GetComponent<PieceScript>().currentCell.isOccupied = false;
             if (piece.GetComponent<PieceScript>().lastCell) piece.GetComponent<PieceScript>().lastCell.isOccupied = false;
             if (this.lastCell) this.lastCell.isOccupied = false;
+
+            PieceScript pieceThis = PhotonView.Find(pieceViewID).GetComponent<PieceScript>();
+            
             Destroy(piece);
         }
 
@@ -370,5 +389,13 @@ public class PieceScript : MonoBehaviourPun, IPointerDownHandler, IDragHandler, 
         return true;
     }
 
- 
+    private void OnDestroy()
+    {
+        if (currentCell)
+        {
+            currentCell.isOccupied = false;
+            currentCell.currentPiece = null;
+        }
+    }
+
 }

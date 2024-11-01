@@ -36,7 +36,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         hostButton.interactable = false;
         joinButton.interactable = false;
         ComputerButton.interactable = false;
-        statusText.text = "Conectando ao servidor...";
+        statusText.text = "Connecting to the server...";
         isHosting = false;
         isConnecting = true; // Agora está conectando
 
@@ -51,7 +51,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         hostButton.interactable = false;
         joinButton.interactable = false;
         ComputerButton.interactable = false;
-        statusText.text = "Conectando ao servidor...";
+        statusText.text = "Connecting to the server...";
         isHosting = true;
         isConnecting = true; // Agora está conectando
 
@@ -70,7 +70,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             hostButton.interactable = false;
             joinButton.interactable = false;
             ComputerButton.interactable = false;
-            statusText.text = "Conectando ao servidor...";
+            statusText.text = "Connecting to the server...";
             roomCode = enteredRoomCode;
             isConnecting = true; // Agora está conectando
             cancelButton.gameObject.SetActive(true); // Esconde o botão de cancelar
@@ -78,7 +78,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         }
         else
         {
-            statusText.text = "Por favor, insira um código de sala válido.";
+            statusText.text = "Please, insert a valid code";
         }
     }
 
@@ -86,13 +86,13 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     {
         if (isHosting)
         {
-            statusText.text = "Conectado! Criando sala...";
+            statusText.text = "Connected! Creating room...";
             roomCode = GenerateRoomCode();
             PhotonNetwork.CreateRoom(roomCode, new RoomOptions { MaxPlayers = 2 });
         }
         else if (!string.IsNullOrEmpty(roomCode))
         {
-            statusText.text = "Conectado! Entrando na sala...";
+            statusText.text = "Connected! Entering room...";
             PhotonNetwork.JoinRoom(roomCode);
         }
         else
@@ -106,20 +106,20 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     {
         if (!isHosting && string.IsNullOrEmpty(roomCode))
         {
-            statusText.text = "No Lobby. Aguardando outros jogadores...";
+            statusText.text = "In Lobby. Waiting for other players...";
             PhotonNetwork.JoinRandomRoom();
         }
     }
 
     public override void OnJoinRandomFailed(short returnCode, string message)
     {
-        statusText.text = "Nenhuma sala disponível. Criando uma nova sala...";
+        statusText.text = "No room avaible. Creating new room...";
         PhotonNetwork.CreateRoom(null, new RoomOptions { MaxPlayers = 2 });
     }
 
     public override void OnJoinedRoom()
     {
-        statusText.text = "Entrou na sala: " + PhotonNetwork.CurrentRoom.Name + ". Aguardando outros jogadores...";
+        statusText.text = "Entered in room: " + PhotonNetwork.CurrentRoom.Name + ". Waiting other players...";
         if (PhotonNetwork.CurrentRoom.PlayerCount == 2)
         {
             StartGame();
@@ -136,20 +136,20 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
-        statusText.text = "Falha ao entrar na sala: " + message;
+        statusText.text = "Failed entering room: " + message;
         joinButton.interactable = true;
     }
 
     public override void OnCreateRoomFailed(short returnCode, string message)
     {
-        statusText.text = "Falha ao criar a sala: " + message;
+        statusText.text = "Failed entering room: " + message;
         hostButton.interactable = true;
         joinButton.interactable = true;
     }
 
     private void StartGame()
     {
-        statusText.text = "Jogador encontrado! Iniciando o jogo...";
+        statusText.text = "Player found! Game will begin";
         PhotonNetwork.LoadLevel("MultiplayerScene"); // Certifique-se de ter uma cena chamada "MultiplayerScene"
     }
     public void StartGameWithPC()
@@ -196,16 +196,27 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         if (isConnecting)
         {
             // Se está conectando, cancelar a conexão e reativar os botões
-            statusText.text = "Conexão cancelada.";
+            statusText.text = "Connection canceled";
             PhotonNetwork.Disconnect(); // Desconectar do Photon
+
+            // Resetar variáveis de estado
+            roomCode = string.Empty; // Limpar o código da sala para evitar erros
+            isHosting = false; // Não está mais em modo de host
+            isConnecting = false; // Não está mais conectando
 
             // Reativar botões
             playButton.interactable = true;
             hostButton.interactable = true;
             joinButton.interactable = true;
             ComputerButton.interactable = true;
-            cancelButton.gameObject.SetActive(false); // Esconde o botão de cancelar
-            isConnecting = false; // Não está mais conectando
+            cancelButton.gameObject.SetActive(false); // Esconder o botão de cancelar
         }
+    }
+
+
+    public void ExitGame()
+    {
+        PlaySoundSelect();
+        Application.Quit();
     }
 }

@@ -57,6 +57,8 @@ public class GameManagerVsComputer : MonoBehaviour
             if (HowManyPiecesComputerHasStucked == ComputerPlayer.instance.computerPieces.Count)
             {
                 Debug.Log("Player ganhou!");
+                textPlayerWin.gameObject.SetActive(true);
+                StartCoroutine(ReturnToMainMenuAfterDelay());
             }
             else
             {
@@ -81,6 +83,8 @@ public class GameManagerVsComputer : MonoBehaviour
             if(HowManyPiecesPlayerHasStucked == playerList[0].PlayerPieces.Count)
             {
                 Debug.Log("Computador ganhou!");
+                textPlayerLost.gameObject.SetActive(true);
+                StartCoroutine(ReturnToMainMenuAfterDelay());
             }
             else
             {
@@ -475,5 +479,34 @@ public class GameManagerVsComputer : MonoBehaviour
     {
         yield return new WaitForSeconds(5); // Espera 5 segundos
         SceneManager.LoadScene("LobbyScene"); // Carrega a cena do menu inicial
+    }
+
+    public void BackToMainMenu()
+    {
+        SoundManager.instance.PlaySoundSelect();
+        StartCoroutine(BackToMainMenuIterator());
+    }
+
+    public IEnumerator BackToMainMenuIterator()
+    {
+        yield return new WaitForSeconds(3);
+        SceneManager.LoadScene("LobbyScene");
+    }
+    public TextMeshProUGUI textRules;
+    public void ShowRules()
+    {
+        if (textRules.gameObject.active == false)
+        {
+            textRules.gameObject.SetActive(true);
+        }
+        else
+        {
+            textRules.gameObject.SetActive(false);
+        }
+    }
+
+    public void HideRules()
+    {
+        textRules.gameObject.SetActive(false);
     }
 }
